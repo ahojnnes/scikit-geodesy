@@ -68,7 +68,8 @@ class CartesicTransform(object):
         """
 
         if not isinstance(other, CartesicTransform):
-            raise TypeError('Cannot combine transformations of differing types.')
+            raise TypeError('Cannot combine transformations '
+                            'of differing types.')
         if type(self) == type(other):
             tform = self.__class__
         else:
@@ -91,7 +92,8 @@ class CartesicTransform(object):
         """
 
         if not isinstance(other, CartesicTransform):
-            raise TypeError('Cannot combine transformations of differing types.')
+            raise TypeError('Cannot combine transformations '
+                            'of differing types.')
         if type(self) == type(other):
             tform = self.__class__
         else:
