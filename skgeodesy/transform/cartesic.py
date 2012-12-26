@@ -140,19 +140,40 @@ class RotationTransform(CartesicTransform):
 
     @property
     def angle1(self):
-        """Rotation angle aroung axis 1."""
+        """Rotation angle aroung axis 1.
+
+        Returns
+        -------
+        angle : float
+            Angle in radians.
+
+        """
 
         return np.arctan2(-self.matrix[2, 1], self.matrix[2, 2])
 
     @property
     def angle2(self):
-        """Rotation angle aroung axis 2."""
+        """Rotation angle aroung axis 2.
+
+        Returns
+        -------
+        angle : float
+            Angle in radians.
+
+        """
 
         return np.arctan2(self.matrix[2, 0],
                           np.sqrt(self.matrix[2, 1]**2 + self.matrix[2, 2]**2))
 
     @property
     def angle3(self):
-        """Rotation angle aroung axis 3."""
+        """Rotation angle aroung axis 3.
+
+        Returns
+        -------
+        angle : float
+            Angle in radians.
+
+        """
 
         return np.arctan2(-self.matrix[1, 0], self.matrix[0, 0])
