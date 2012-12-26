@@ -41,6 +41,17 @@ class CartesicTransform(object):
             return np.squeeze(dst[:, :3])
         return dst[:, :3]
 
+    def inverse(self):
+        """Return inverse transform.
+
+        Returns
+        -------
+        inverse : object
+            Inverse transform object.
+
+        """
+        return self.__class__(matrix=np.linalg.inv(self.matrix))
+
     def before(self, other):
         """New transform of this transform applied before another transform.
 

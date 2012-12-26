@@ -37,5 +37,12 @@ def test_rotation_call():
     assert_almost_equal(t([1, 1, 0]), [a, 0, 0])
 
 
+def test_rotation_inv():
+    t = transform.RotationTransform(angle=1, axis=1)
+    tinv = t.inverse()
+    coord = [1, 2, 3]
+    assert_almost_equal(coord, tinv(t(coord)))
+
+
 if __name__ == '__main__':
     run_module_suite()
