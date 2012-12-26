@@ -39,7 +39,7 @@ class CartesicTransform(object):
             tform = self.__class__
         else:
             tform = CartesicTransform
-        return tform(other.matrix.dot(self.matrix))
+        return tform(matrix=other.matrix.dot(self.matrix))
 
     def after(self, other):
         """New transform of this transform applied after another transform.
@@ -62,16 +62,18 @@ class CartesicTransform(object):
             tform = self.__class__
         else:
             tform = CartesicTransform
-        return tform(self.matrix.dot(other.matrix))
+        return tform(matrix=self.matrix.dot(other.matrix))
 
 
 class RotationTransform(CartesicTransform):
 
-    def __init__(self, angle=None, axis=None):
+    def __init__(self, matrix=None, angle=0, axis=1):
         """Create rotation transform.
 
         Parameters
         ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
         angle : float, optional
             Counter-clockwise angle in radians.
         axis : {1, 2, 3}, optional
@@ -79,29 +81,26 @@ class RotationTransform(CartesicTransform):
 
         """
 
-        if angle is None and axis is None:
-            self.matrix = np.identity(4, dtype=np.double)
-        elif (angle is not None and axis is None) \
-             or (angle is None and axis is not None):
-            raise ValueError('You must specify both angle and axis.')
-
-        if axis == 1:
-            self.matrix = np.array([[1,              0,             0, 0],
-                                    [0,  np.cos(angle), np.sin(angle), 0],
-                                    [0, -np.sin(angle), np.cos(angle), 0],
-                                    [0,              0,             0, 1]])
-        elif axis == 2:
-            self.matrix = np.array([[np.cos(angle), 0, -np.sin(angle), 0],
-                                    [            0, 1,              0, 0],
-                                    [np.sin(angle), 0,  np.cos(angle), 0],
-                                    [            0, 0,              0, 1]])
-        elif axis == 3:
-            self.matrix = np.array([[ np.cos(angle), np.sin(angle), 0, 0],
-                                    [-np.sin(angle), np.cos(angle), 0, 0],
-                                    [            0,              0, 1, 0],
-                                    [            0,              0, 0, 1]])
+        if matrix is not None:
+            self.matrix = matrix
         else:
-            raise ValueError('Axis must be 1, 2 or 3.')
+            if axis == 1:
+                self.matrix = np.array([[1,              0,             0, 0],
+                                        [0,  np.cos(angle), np.sin(angle), 0],
+                                        [0, -np.sin(angle), np.cos(angle), 0],
+                                        [0,              0,             0, 1]])
+            elif axis == 2:
+                self.matrix = np.array([[np.cos(angle), 0, -np.sin(angle), 0],
+                                        [            0, 1,              0, 0],
+                                        [np.sin(angle), 0,  np.cos(angle), 0],
+                                        [            0, 0,              0, 1]])
+            elif axis == 3:
+                self.matrix = np.array([[ np.cos(angle), np.sin(angle), 0, 0],
+                                        [-np.sin(angle), np.cos(angle), 0, 0],
+                                        [            0,              0, 1, 0],
+                                        [            0,              0, 0, 1]])
+            else:
+                raise ValueError('Axis must be 1, 2 or 3.')
 
     @property
     def angle1(self):
