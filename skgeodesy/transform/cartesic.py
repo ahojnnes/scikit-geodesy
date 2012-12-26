@@ -18,6 +18,29 @@ class CartesicTransform(object):
             matrix = np.identity(4, dtype=np.double)
         self.matrix = matrix
 
+    def __call__(self, coords):
+        coords = np.array(coords, copy=False)
+        input_ndim = coords.ndim
+        coords = np.atleast_2d(coords)
+
+        if coords.shape[1] == 2:
+            x, y = np.transpose(coords)
+            z = np.zeros_like(x)
+        else:
+            x, y, z = np.transpose(coords)
+
+        src = np.vstack((x, y, z, np.ones_like(x)))
+        dst = np.dot(src.transpose(), self.matrix.transpose())
+
+        # rescale to homogeneous coordinates
+        dst[:, 0] /= dst[:, 3]
+        dst[:, 1] /= dst[:, 3]
+        dst[:, 2] /= dst[:, 3]
+
+        if input_ndim == 1:
+            return np.squeeze(dst[:, :3])
+        return dst[:, :3]
+
     def before(self, other):
         """New transform of this transform applied before another transform.
 
