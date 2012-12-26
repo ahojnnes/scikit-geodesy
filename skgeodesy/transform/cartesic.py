@@ -4,12 +4,12 @@ import numpy as np
 class CartesicTransform(object):
 
     def __init__(self, matrix=None):
-        """Create cartesic transformation.
+        """Create cartesic transform.
 
         Parameters
         ----------
         matrix : (4, 4) array, optional
-            Homogeneous transformation matrix. An identity matrix is created by
+            Homogeneous transform matrix. An identity matrix is created by
             default.
 
         """
@@ -18,11 +18,57 @@ class CartesicTransform(object):
             matrix = np.identity(4, dtype=np.double)
         self.matrix = matrix
 
+    def before(self, other):
+        """New transform of this transform applied before another transform.
+
+        Parameters
+        ----------
+        other : transform object
+            Any other cartesic transform.
+
+        Returns
+        -------
+        new : transform object
+            New transform containing both transforms applied after each other.
+
+        """
+
+        if not isinstance(other, CartesicTransform):
+            raise TypeError('Cannot combine transformations of differing types.')
+        if type(self) == type(other):
+            tform = self.__class__
+        else:
+            tform = CartesicTransform
+        return tform(other.matrix.dot(self.matrix))
+
+    def after(self, other):
+        """New transform of this transform applied after another transform.
+
+        Parameters
+        ----------
+        other : transform object
+            Any other cartesic transform.
+
+        Returns
+        -------
+        new : transform object
+            New transform containing both transforms applied after each other.
+
+        """
+
+        if not isinstance(other, CartesicTransform):
+            raise TypeError('Cannot combine transformations of differing types.')
+        if type(self) == type(other):
+            tform = self.__class__
+        else:
+            tform = CartesicTransform
+        return tform(self.matrix.dot(other.matrix))
+
 
 class RotationTransform(CartesicTransform):
 
     def __init__(self, angle=None, axis=None):
-        """Create rotation transformation.
+        """Create rotation transform.
 
         Parameters
         ----------
