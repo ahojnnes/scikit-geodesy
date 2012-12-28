@@ -132,7 +132,8 @@ class TestPerspectiveTransform(object):
             for perspective in np.linspace(-10, 10, 10):
                 t = transform.PerspectiveTransform(perspective=perspective,
                                                    axis=axis)
-                assert_almost_equal(t.perspective[axis - 1], perspective)
+                tperspective = getattr(t, 'p%s' % AXIS_NAMES[axis-1])
+                assert_almost_equal(tperspective, perspective)
 
     def test_call(self):
         t1 = transform.PerspectiveTransform(perspective=3, axis=1)

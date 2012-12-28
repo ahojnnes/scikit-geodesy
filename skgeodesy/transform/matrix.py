@@ -408,10 +408,62 @@ class PerspectiveTransform(MatrixTransform):
             self.matrix[3, axis - 1] = perspective
 
     @property
-    def perspective(self):
+    def _perspective(self):
         perspective_removed = self.matrix.copy()
         perspective_removed[3] = (0, 0, 0, 1)
         return np.linalg.solve(perspective_removed.T, self.matrix[3])
+
+    @property
+    def px(self):
+        """Perspective factor on x-axis.
+
+        Returns
+        -------
+        px : float
+            Perspective factor.
+
+        """
+
+        return self._perspective[0]
+
+    @property
+    def py(self):
+        """Perspective factor on y-axis.
+
+        Returns
+        -------
+        py : float
+            Perspective factor.
+
+        """
+
+        return self._perspective[1]
+
+    @property
+    def pz(self):
+        """Perspective factor on z-axis.
+
+        Returns
+        -------
+        pz : float
+            Perspective factor.
+
+        """
+
+        return self._perspective[2]
+
+    @property
+    def pw(self):
+        """Perspective factor on 4th coordinate component (=1).
+
+        Returns
+        -------
+        pw : float
+            Perspective factor.
+
+        """
+
+        return self._perspective[3]
 
 
 class EuclideanTransform(TranslationTransform, RotationTransform):
