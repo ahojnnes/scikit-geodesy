@@ -125,6 +125,33 @@ class TestShearTransform(object):
         assert_almost_equal(coord, tinv(t(coord)))
 
 
+class TestPerspectiveTransform(object):
+
+    def test_init(self):
+        for axis in (1, 2, 3):
+            for perspective in np.linspace(-10, 10, 10):
+                t = transform.PerspectiveTransform(perspective=perspective,
+                                                   axis=axis)
+                assert_almost_equal(t.perspective[axis - 1], perspective)
+
+    def test_call(self):
+        t1 = transform.PerspectiveTransform(perspective=3, axis=1)
+        assert_almost_equal(t1([1, 1, 1]), [0.25, 0.25, 0.25])
+        t2 = transform.PerspectiveTransform(perspective=3, axis=2)
+        assert_almost_equal(t2([1, 1, 1]), [0.25, 0.25, 0.25])
+        t3 = transform.PerspectiveTransform(perspective=3, axis=3)
+        assert_almost_equal(t3([1, 1, 1]), [0.25, 0.25, 0.25])
+
+        t = t1.before(t2).before(t3)
+        assert_almost_equal(t([1, 1, 1]), [0.1, 0.1, 0.1])
+
+    def test_inverse(self):
+        t = transform.PerspectiveTransform(perspective=3, axis=1)
+        tinv = t.inverse()
+        coord = [1, 2, 3]
+        assert_almost_equal(coord, tinv(t(coord)))
+
+
 class TestEuclideanTransform(object):
 
     def test_init(self):
