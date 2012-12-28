@@ -125,6 +125,36 @@ class TestShearTransform(object):
         assert_almost_equal(coord, tinv(t(coord)))
 
 
+class TestEuclideanTransform(object):
+
+    def test_init(self):
+        translation = np.zeros((3, ))
+        for rot in np.linspace(-np.pi / 2, np.pi / 2, 5):
+            angle = (rot, rot, rot)
+            for trans in np.linspace(-100, 100, 10):
+                translation[:] = trans
+                t = transform.EuclideanTransform(angle=angle,
+                                                 translation=translation)
+                assert_almost_equal(t.rx, rot)
+                assert_almost_equal(t.ry, rot)
+                assert_almost_equal(t.rz, rot)
+                assert_almost_equal(t.tx, trans)
+                assert_almost_equal(t.ty, trans)
+                assert_almost_equal(t.tz, trans)
+
+    def test_call(self):
+        t = transform.EuclideanTransform(angle=(np.pi, np.pi, np.pi),
+                                         translation=(10, 10, 10))
+        assert_almost_equal(t([1, 1, 1]), [11, 11, 11])
+
+    def test_inverse(self):
+        t = transform.EuclideanTransform(angle=(1, 2, 3),
+                                         translation=(1, 2, 3))
+        tinv = t.inverse()
+        coord = [1, 2, 3]
+        assert_almost_equal(coord, tinv(t(coord)))
+
+
 class TestSimilarityTransform(object):
 
     def test_init(self):
