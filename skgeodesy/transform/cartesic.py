@@ -24,11 +24,26 @@ class CartesicTransform(object):
         self.matrix = matrix
 
     def __call__(self, coords):
+        """Apply transform to coordinates.
+
+        Parameters
+        ----------
+        coords : (N, 2) or (N, 3) array_like
+            2D or 3D coordinates. If z-component is not given it is set to 0.
+
+        Returns
+        -------
+        out : (N, 2) or (N, 3) array_like
+            Transformed 2D or 3D coordinates.
+
+        """
+
         coords = np.array(coords, copy=False)
         input_ndim = coords.ndim
         coords = np.atleast_2d(coords)
+        input_is_2D = coords.shape[1] == 2
 
-        if coords.shape[1] == 2:
+        if input_is_2D:
             x, y = np.transpose(coords)
             z = np.zeros_like(x)
         else:
@@ -42,9 +57,13 @@ class CartesicTransform(object):
         dst[:, 1] /= dst[:, 3]
         dst[:, 2] /= dst[:, 3]
 
+        if input_is_2D:
+            out = dst[:, :2]
+        else:
+            out = dst[:, :3]
         if input_ndim == 1:
-            return np.squeeze(dst[:, :3])
-        return dst[:, :3]
+            out = np.squeeze(out)
+        return out
 
     def inverse(self):
         """Return inverse transform.
