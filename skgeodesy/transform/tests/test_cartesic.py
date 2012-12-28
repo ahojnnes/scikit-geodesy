@@ -6,6 +6,33 @@ from skgeodesy import transform
 AXIS_NAMES = ['x', 'y', 'z']
 
 
+def test_translation_init():
+    for axis in (1, 2, 3):
+        for translation in np.linspace(-100, 100, 20):
+            t = transform.TranslationTransform(translation=translation,
+                                               axis=axis)
+            assert_almost_equal(getattr(t, 't%s' % AXIS_NAMES[axis-1]),
+                                translation)
+
+
+def test_translation_call():
+    t1 = transform.TranslationTransform(translation=0.1, axis=1)
+    assert_almost_equal(t1([1, 1, 1]), [1.1, 1, 1])
+    t2 = transform.TranslationTransform(translation=0.1, axis=2)
+    assert_almost_equal(t2([1, 1, 1]), [1, 1.1, 1])
+    t3 = transform.TranslationTransform(translation=0.1, axis=3)
+    assert_almost_equal(t3([1, 1, 1]), [1, 1, 1.1])
+    t = t1.before(t2).before(t3)
+    assert_almost_equal(t([1, 1, 1]), [1.1, 1.1, 1.1])
+
+
+def test_translation_inverse():
+    t = transform.TranslationTransform(translation=0.1, axis=1)
+    tinv = t.inverse()
+    coord = [1, 2, 3]
+    assert_almost_equal(coord, tinv(t(coord)))
+
+
 def test_scale_init():
     for axis in (1, 2, 3):
         for scale in np.linspace(0.1, 4, 10):
@@ -75,10 +102,10 @@ def test_rotation_inverse():
 def test_similarity_init():
     angles = np.zeros((3, ))
     translation = np.zeros((3, ))
-    for angle in np.linspace(-np.pi / 2, np.pi / 2, 10):
+    for angle in np.linspace(-np.pi / 2, np.pi / 2, 5):
         angles[:] = angle
-        for scale in np.linspace(0.1, 4, 10):
-            for trans in np.linspace(-100, 100, 30):
+        for scale in np.linspace(0.1, 4, 5):
+            for trans in np.linspace(-100, 100, 10):
                 translation[:] = trans
                 t = transform.SimilarityTransform(scale=scale, angles=angles,
                                                   translation=translation)
