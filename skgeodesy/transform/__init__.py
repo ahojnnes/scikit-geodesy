@@ -1,1 +1,1 @@
-from .cartesic import CartesicTransform, RotationTransform
+from .cartesic import CartesicTransform, RotationTransform, SimilarityTransform
