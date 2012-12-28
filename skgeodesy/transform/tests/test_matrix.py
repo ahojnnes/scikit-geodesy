@@ -104,22 +104,22 @@ class TestRotationTransform(object):
 class TestShearTransform(object):
 
     def test_call(self):
-        t1 = transform.ShearTransform(shear=(2, 2), axis=1)
-        assert_almost_equal(t1([1, 1, 1]), [1, 3, 3])
-        t2 = transform.ShearTransform(shear=(2, 2), axis=2)
-        assert_almost_equal(t2([1, 1, 1]), [3, 1, 3])
-        t3 = transform.ShearTransform(shear=(2, 2), axis=3)
-        assert_almost_equal(t3([1, 1, 1]), [3, 3, 1])
+        t1 = transform.ShearTransform(shear=2, axis=12)
+        assert_almost_equal(t1([1, 1, 1]), [1, 3, 1])
+        t2 = transform.ShearTransform(shear=2, axis=21)
+        assert_almost_equal(t2([1, 1, 1]), [3, 1, 1])
+        t3 = transform.ShearTransform(shear=2, axis=32)
+        assert_almost_equal(t3([1, 1, 1]), [1, 3, 1])
 
         t = t1.before(t2).before(t3)
-        assert_almost_equal(t([1, 1, 1]), [25, 21, 9])
+        assert_almost_equal(t([1, 1, 1]), [7, 5, 1])
         t = t2.before(t1).before(t3)
-        assert_almost_equal(t([1, 1, 1]), [21, 25, 9])
+        assert_almost_equal(t([1, 1, 1]), [3, 9, 1])
         t = t3.before(t1).before(t2)
-        assert_almost_equal(t([1, 1, 1]), [21, 9, 25])
+        assert_almost_equal(t([1, 1, 1]), [11, 5, 1])
 
     def test_inverse(self):
-        t = transform.ShearTransform(shear=(1, 2), axis=1)
+        t = transform.ShearTransform(shear=3, axis=13)
         tinv = t.inverse()
         coord = [1, 2, 3]
         assert_almost_equal(coord, tinv(t(coord)))
@@ -219,7 +219,7 @@ class TestAffineTransform(object):
     def test_inverse(self):
         t = transform.AffineTransform(scale=(1, 2, 3), angle=(1, 2, 3),
                                       translation=(1, 2, 3),
-                                      shear=((1, 2), (3, 4), (5, 6)))
+                                      shear=((13, 1), (32, 2), (21, 3)))
         tinv = t.inverse()
         coord = [1, 2, 3]
         assert_almost_equal(coord, tinv(t(coord)))

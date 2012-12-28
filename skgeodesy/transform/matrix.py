@@ -6,6 +6,20 @@ def _check_axis(axis):
         raise ValueError('Axis must be 1, 2 or 3.')
 
 
+def _extract_shear_axis(axis):
+    error = False
+    axis = str(axis)
+    if len(axis) != 2:
+        raise ValueError('Axis must be a combination of 1, 2 and 3, e.g. 12')
+    else:
+        axis1, axis2 = int(axis[0]), int(axis[1])
+        _check_axis(axis1)
+        _check_axis(axis2)
+        if axis1 == axis2:
+            raise ValueError('Axes must not be the same.')
+        return axis1, axis2
+
+
 class MatrixTransform(object):
 
     def __init__(self, matrix=None):
@@ -347,37 +361,27 @@ class RotationTransform(MatrixTransform):
 
 class ShearTransform(MatrixTransform):
 
-    def __init__(self, matrix=None, shear=(0, 0), axis=1):
+    def __init__(self, matrix=None, shear=0, axis=11):
         """Create shear transform.
 
         Parameters
         ----------
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
-        shear : (2, ) array_like, optional
-            Shear factors:
-             * `axis = 1`: (y, z)
-             * `axis = 2`: (x, z)
-             * `axis = 3`: (x, y)
-        axis : {1, 2, 3}, optional
-            Index of shear axis (x, y, z) which is not changed.
+        shear : float, optional
+            Shear factor.
+        axis : {12, 21, 13, 31, 23, 32}, optional
+            First digit is the sheared axis, second is the affected axis. E.g.
+            `axis=12` shears the x coordinate and changes the y coordinate.
 
         """
 
         if matrix is not None:
             self.matrix = matrix
         else:
-            _check_axis(axis)
             self.matrix = np.identity(4, dtype=np.double)
-            if axis == 1:
-                self.matrix[1, 0] = shear[0]
-                self.matrix[2, 0] = shear[1]
-            elif axis == 2:
-                self.matrix[0, 1] = shear[0]
-                self.matrix[2, 1] = shear[1]
-            elif axis == 3:
-                self.matrix[0, 2] = shear[0]
-                self.matrix[1, 2] = shear[1]
+            axis1, axis2 = _extract_shear_axis(axis)
+            self.matrix[axis2 - 1, axis1 - 1] = shear
 
 
 class EuclideanTransform(TranslationTransform, RotationTransform):
@@ -488,7 +492,7 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
                       ShearTransform):
 
     def __init__(self, matrix=None, scale=(1, 1, 1), angle=(0, 0, 0),
-                 translation=(0, 0, 0), shear=((0, 0), (0, 0), (0, 0))):
+                 translation=(0, 0, 0), shear=()):
         """Create affine transform.
 
         This transform contains translation, rotation, scaling and shearing.
@@ -504,8 +508,9 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
             respectively.
         translation : (3, ) array_like, optional
             Translation in x, y and z direction.
-        shear : (3, 2) array_like, optional
-            Shear factors. See `ShearTransform` for usage.
+        shear : (N, 2) array_like, optional
+            Shear factors with each row as `(axis, shear)`. See `ShearTransform`
+            for usage.
 
         """
 
@@ -521,10 +526,11 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
             trans3 = TranslationTransform(translation=translation[2], axis=3)
             trans = trans1.before(trans2).before(trans3)
 
-            shear1 = ShearTransform(shear=shear[0], axis=1)
-            shear2 = ShearTransform(shear=shear[1], axis=2)
-            shear3 = ShearTransform(shear=shear[2], axis=3)
-            shear = shear1.before(shear2).before(shear3)
+            shear_tform = MatrixTransform()
+            for axis, shear_factor in shear:
+                tf = ShearTransform(shear=shear_factor, axis=axis)
+                shear_tform = shear_tform.before(tf)
+            shear = shear_tform
 
             rot1 = RotationTransform(angle=angle[0], axis=1)
             rot2 = RotationTransform(angle=angle[1], axis=2)
