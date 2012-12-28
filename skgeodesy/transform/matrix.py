@@ -383,8 +383,9 @@ class ShearTransform(MatrixTransform):
 class EuclideanTransform(TranslationTransform, RotationTransform):
 
     def __init__(self, matrix=None, angle=(0, 0, 0), translation=(0, 0, 0)):
-
         """Create euclidean transform.
+
+        This transform contains translation and rotation.
 
         Parameters
         ----------
@@ -425,8 +426,9 @@ class SimilarityTransform(TranslationTransform, ScaleTransform,
 
     def __init__(self, matrix=None, scale=1, angle=(0, 0, 0),
                  translation=(0, 0, 0)):
-
         """Create similarity transform.
+
+        This transform contains translation, rotation and scaling.
 
         Parameters
         ----------
@@ -487,8 +489,9 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
 
     def __init__(self, matrix=None, scale=(1, 1, 1), angle=(0, 0, 0),
                  translation=(0, 0, 0), shear=((0, 0), (0, 0), (0, 0))):
+        """Create affine transform.
 
-        """Create similarity transform.
+        This transform contains translation, rotation, scaling and shearing.
 
         Parameters
         ----------
