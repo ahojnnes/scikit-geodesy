@@ -105,6 +105,30 @@ class TestRotationTransform(object):
         assert_almost_equal(coord, tinv(t(coord)))
 
 
+class TestShearTransform(object):
+
+    def test_call(self):
+        t1 = transform.ShearTransform(shear=(2, 2), axis=1)
+        assert_almost_equal(t1([1, 1, 1]), [1, 3, 3])
+        t2 = transform.ShearTransform(shear=(2, 2), axis=2)
+        assert_almost_equal(t2([1, 1, 1]), [3, 1, 3])
+        t3 = transform.ShearTransform(shear=(2, 2), axis=3)
+        assert_almost_equal(t3([1, 1, 1]), [3, 3, 1])
+
+        t = t1.before(t2).before(t3)
+        assert_almost_equal(t([1, 1, 1]), [25, 21, 9])
+        t = t2.before(t1).before(t3)
+        assert_almost_equal(t([1, 1, 1]), [21, 25, 9])
+        t = t3.before(t1).before(t2)
+        assert_almost_equal(t([1, 1, 1]), [21, 9, 25])
+
+    def test_inverse(self):
+        t = transform.ShearTransform(shear=(1, 2), axis=1)
+        tinv = t.inverse()
+        coord = [1, 2, 3]
+        assert_almost_equal(coord, tinv(t(coord)))
+
+
 class TestSimilarityTransform(object):
 
     def test_init(self):
