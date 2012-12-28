@@ -1,3 +1,3 @@
 from .matrix import MatrixTransform, TranslationTransform, ScaleTransform, \
-                    RotationTransform, ShearTransform, SimilarityTransform, \
-                    AffineTransform
+                    RotationTransform, ShearTransform, EuclideanTransform, \
+                    SimilarityTransform, AffineTransform
