@@ -380,6 +380,46 @@ class ShearTransform(MatrixTransform):
                 self.matrix[1, 2] = shear[1]
 
 
+class EuclideanTransform(TranslationTransform, RotationTransform):
+
+    def __init__(self, matrix=None, angle=(0, 0, 0), translation=(0, 0, 0)):
+
+        """Create euclidean transform.
+
+        Parameters
+        ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
+        angle : (3, ) array_like, optional
+            Counter-clockwise angle in radians around x, y and z axis,
+            respectively.
+        translation : (3, ) array_like, optional
+            Translation in x, y and z direction.
+
+        """
+
+        if matrix is not None:
+            self.matrix = matrix
+        else:
+            # NOTE: this can be speeded up by combined application of scale and
+            # and translation, but for readability the object-oriented approach
+            # is chosen
+
+            trans1 = TranslationTransform(translation=translation[0], axis=1)
+            trans2 = TranslationTransform(translation=translation[1], axis=2)
+            trans3 = TranslationTransform(translation=translation[2], axis=3)
+            trans = trans1.before(trans2).before(trans3)
+
+            rot1 = RotationTransform(angle=angle[0], axis=1)
+            rot2 = RotationTransform(angle=angle[1], axis=2)
+            rot3 = RotationTransform(angle=angle[2], axis=3)
+            rot = rot1.before(rot2).before(rot3)
+
+            tform = trans.after(rot)
+
+            self.matrix = tform.matrix
+
+
 class SimilarityTransform(TranslationTransform, ScaleTransform,
                           RotationTransform):
 
