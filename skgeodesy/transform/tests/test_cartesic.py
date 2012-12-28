@@ -105,7 +105,7 @@ class TestRotationTransform(object):
         assert_almost_equal(coord, tinv(t(coord)))
 
 
-class TestTranslationTransform(object):
+class TestSimilarityTransform(object):
 
     def test_init(self):
         angles = np.zeros((3, ))
