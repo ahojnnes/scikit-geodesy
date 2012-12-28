@@ -1,6 +1,11 @@
 import numpy as np
 
 
+def _check_axis(axis):
+    if axis not in (1, 2, 3):
+        raise ValueError('Axis must be 1, 2 or 3.')
+
+
 class CartesicTransform(object):
 
     def __init__(self, matrix=None):
@@ -101,6 +106,70 @@ class CartesicTransform(object):
         return tform(matrix=self.matrix.dot(other.matrix))
 
 
+class ScaleTransform(CartesicTransform):
+
+    def __init__(self, matrix=None, scale=1, axis=1):
+        """Create scale transform.
+
+        Parameters
+        ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
+        scale : float, optional
+            Scale factor.
+        axis : {1, 2, 3}, optional
+            Index of rotation axis (x, y, z).
+
+        """
+
+        if matrix is not None:
+            self.matrix = matrix
+        else:
+            _check_axis(axis)
+            self.matrix = np.identity(4, dtype=np.double)
+            self.matrix[axis - 1, axis - 1] *= scale
+
+    @property
+    def sx(self):
+        """Scale factor in x-axis direction.
+
+        Returns
+        -------
+        sx : float
+            Scale factor.
+
+        """
+
+        return np.sqrt(np.sum(self.matrix[:3, 0]**2))
+
+    @property
+    def sy(self):
+        """Scale factor in y-axis direction.
+
+        Returns
+        -------
+        sy : float
+            Scale factor.
+
+        """
+
+        return np.sqrt(np.sum(self.matrix[:3, 1]**2))
+
+    @property
+    def sz(self):
+        """Scale factor in z-axis direction.
+
+        Returns
+        -------
+        sz : float
+            Scale factor.
+
+        """
+
+        return np.sqrt(np.sum(self.matrix[:3, 2]**2))
+
+
+
 class RotationTransform(CartesicTransform):
 
     def __init__(self, matrix=None, angle=0, axis=1):
@@ -120,6 +189,7 @@ class RotationTransform(CartesicTransform):
         if matrix is not None:
             self.matrix = matrix
         else:
+            _check_axis(axis)
             if axis == 1:
                 self.matrix = np.array([[1,              0,             0, 0],
                                         [0,  np.cos(angle), np.sin(angle), 0],
@@ -135,8 +205,6 @@ class RotationTransform(CartesicTransform):
                                         [-np.sin(angle), np.cos(angle), 0, 0],
                                         [            0,              0, 1, 0],
                                         [            0,              0, 0, 1]])
-            else:
-                raise ValueError('Axis must be 1, 2 or 3.')
 
     @property
     def rx(self):
@@ -144,7 +212,7 @@ class RotationTransform(CartesicTransform):
 
         Returns
         -------
-        angle : float
+        rx : float
             Angle in radians.
 
         """
@@ -157,7 +225,7 @@ class RotationTransform(CartesicTransform):
 
         Returns
         -------
-        angle : float
+        ry : float
             Angle in radians.
 
         """
@@ -171,7 +239,7 @@ class RotationTransform(CartesicTransform):
 
         Returns
         -------
-        angle : float
+        rz : float
             Angle in radians.
 
         """
