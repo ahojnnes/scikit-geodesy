@@ -329,6 +329,41 @@ class RotationTransform(CartesicTransform):
         return np.arctan2(-self.matrix[1, 0], self.matrix[0, 0])
 
 
+class ShearTransform(CartesicTransform):
+
+    def __init__(self, matrix=None, shear=(0, 0), axis=1):
+        """Create shear transform.
+
+        Parameters
+        ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
+        shear : (2, ) array_like, optional
+            Shear factors:
+             * `axis = 1`: (y, z)
+             * `axis = 2`: (x, z)
+             * `axis = 3`: (x, y)
+        axis : {1, 2, 3}, optional
+            Index of rotation axis (x, y, z).
+
+        """
+
+        if matrix is not None:
+            self.matrix = matrix
+        else:
+            _check_axis(axis)
+            self.matrix = np.identity(4, dtype=np.double)
+            if axis == 1:
+                self.matrix[1, 0] = shear[0]
+                self.matrix[2, 0] = shear[1]
+            elif axis == 2:
+                self.matrix[0, 1] = shear[0]
+                self.matrix[2, 1] = shear[1]
+            elif axis == 3:
+                self.matrix[0, 2] = shear[0]
+                self.matrix[1, 2] = shear[1]
+
+
 class SimilarityTransform(TranslationTransform, ScaleTransform,
                           RotationTransform):
 
