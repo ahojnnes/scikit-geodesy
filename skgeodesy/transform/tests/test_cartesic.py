@@ -117,7 +117,7 @@ class TestSimilarityTransform(object):
                     translation[:] = trans
                     t = transform.SimilarityTransform(scale=scale, angles=angles,
                                                       translation=translation)
-                    assert_almost_equal(t.scale, scale)
+                    assert_almost_equal(t.s, scale)
                     assert_almost_equal(t.rx, angle)
                     assert_almost_equal(t.ry, angle)
                     assert_almost_equal(t.rz, angle)

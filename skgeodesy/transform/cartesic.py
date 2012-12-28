@@ -329,7 +329,8 @@ class RotationTransform(CartesicTransform):
         return np.arctan2(-self.matrix[1, 0], self.matrix[0, 0])
 
 
-class SimilarityTransform(RotationTransform):
+class SimilarityTransform(TranslationTransform, ScaleTransform,
+                          RotationTransform):
 
     def __init__(self, matrix=None, scale=1, angles=(0, 0, 0),
                  translation=(0, 0, 0)):
@@ -353,54 +354,38 @@ class SimilarityTransform(RotationTransform):
         if matrix is not None:
             self.matrix = matrix
         else:
+            # NOTE: this can be speeded up by combined application of scale and
+            # and translation, but for readability the object-oriented approach
+            # is chosen
+
+            trans1 = TranslationTransform(translation=translation[0], axis=1)
+            trans2 = TranslationTransform(translation=translation[1], axis=2)
+            trans3 = TranslationTransform(translation=translation[2], axis=3)
+            trans = trans1.before(trans2).before(trans3)
+
+            scale1 = ScaleTransform(scale=scale, axis=1)
+            scale2 = ScaleTransform(scale=scale, axis=2)
+            scale3 = ScaleTransform(scale=scale, axis=3)
+            scale = scale1.before(scale2).before(scale3)
+
             rot1 = RotationTransform(angle=angles[0], axis=1)
             rot2 = RotationTransform(angle=angles[1], axis=2)
             rot3 = RotationTransform(angle=angles[2], axis=3)
             rot = rot1.before(rot2).before(rot3)
 
-            self.matrix = rot.matrix
-            self.matrix[:3, :3] *= scale
-            self.matrix[:3, 3] = translation
+            tform = trans.after(scale.after(rot))
+
+            self.matrix = tform.matrix
 
     @property
-    def scale(self):
-        return np.mean(np.sqrt(np.sum(self.matrix[:3, :3]**2, axis=1)))
-
-    @property
-    def tx(self):
-        """Translation in x-axis direction.
+    def s(self):
+        """Scale factor.
 
         Returns
         -------
-        tx : float
-            Translation.
+        s : float
+            Scale factor.
 
         """
 
-        return self.matrix[0, 3]
-
-    @property
-    def ty(self):
-        """Translation in y-axis direction.
-
-        Returns
-        -------
-        ty : float
-            Translation.
-
-        """
-
-        return self.matrix[1, 3]
-
-    @property
-    def tz(self):
-        """Translation in z-axis direction.
-
-        Returns
-        -------
-        tz : float
-            Translation.
-
-        """
-
-        return self.matrix[2, 3]
+        return np.mean((self.sx, self.sy, self.sz))
