@@ -125,6 +125,69 @@ class CartesicTransform(object):
         return tform(matrix=self.matrix.dot(other.matrix))
 
 
+class TranslationTransform(CartesicTransform):
+
+    def __init__(self, matrix=None, translation=0, axis=1):
+        """Create scale transform.
+
+        Parameters
+        ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
+        scale : float, optional
+            Scale factor.
+        axis : {1, 2, 3}, optional
+            Index of rotation axis (x, y, z).
+
+        """
+
+        if matrix is not None:
+            self.matrix = matrix
+        else:
+            _check_axis(axis)
+            self.matrix = np.identity(4, dtype=np.double)
+            self.matrix[axis - 1, 3] = translation
+
+    @property
+    def tx(self):
+        """Translation in x-axis direction.
+
+        Returns
+        -------
+        tx : float
+            Translation.
+
+        """
+
+        return self.matrix[0, 3]
+
+    @property
+    def ty(self):
+        """Translation in y-axis direction.
+
+        Returns
+        -------
+        ty : float
+            Translation.
+
+        """
+
+        return self.matrix[1, 3]
+
+    @property
+    def tz(self):
+        """Translation in z-axis direction.
+
+        Returns
+        -------
+        tz : float
+            Translation.
+
+        """
+
+        return self.matrix[2, 3]
+
+
 class ScaleTransform(CartesicTransform):
 
     def __init__(self, matrix=None, scale=1, axis=1):
