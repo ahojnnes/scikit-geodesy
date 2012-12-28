@@ -13,8 +13,7 @@ class TestTranslationTransform(object):
             for translation in np.linspace(-100, 100, 20):
                 t = transform.TranslationTransform(translation=translation,
                                                    axis=axis)
-                assert_almost_equal(getattr(t, 't%s' % AXIS_NAMES[axis-1]),
-                                    translation)
+                assert_almost_equal(t.translation[axis - 1], translation)
 
     def test_call(self):
         t1 = transform.TranslationTransform(translation=0.1, axis=1)
@@ -39,8 +38,7 @@ class TestScaleTransform(object):
         for axis in (1, 2, 3):
             for scale in np.linspace(0.1, 4, 10):
                 t = transform.ScaleTransform(scale=scale, axis=axis)
-                tscale = getattr(t, 's%s' % AXIS_NAMES[axis-1])
-                assert_almost_equal(tscale, scale)
+                assert_almost_equal(t.scale[axis - 1], scale)
 
     def test_call(self):
         t1 = transform.ScaleTransform(scale=0.1, axis=1)
@@ -65,8 +63,7 @@ class TestRotationTransform(object):
         for axis in (1, 2, 3):
             for angle in np.linspace(-np.pi / 2, np.pi / 2, 10):
                 t = transform.RotationTransform(angle=angle, axis=axis)
-                tangle = getattr(t, 'r%s' % AXIS_NAMES[axis-1])
-                assert_almost_equal(tangle, angle)
+                assert_almost_equal(t.rotation[axis - 1], angle)
 
     def test_call(self):
         # mirror
@@ -132,8 +129,7 @@ class TestPerspectiveTransform(object):
             for perspective in np.linspace(-10, 10, 10):
                 t = transform.PerspectiveTransform(perspective=perspective,
                                                    axis=axis)
-                tperspective = getattr(t, 'p%s' % AXIS_NAMES[axis-1])
-                assert_almost_equal(tperspective, perspective)
+                assert_almost_equal(t.perspective[axis - 1], perspective)
 
     def test_call(self):
         t1 = transform.PerspectiveTransform(perspective=3, axis=1)
@@ -163,12 +159,8 @@ class TestEuclideanTransform(object):
                 translation[:] = trans
                 t = transform.EuclideanTransform(angle=angle,
                                                  translation=translation)
-                assert_almost_equal(t.rx, rot)
-                assert_almost_equal(t.ry, rot)
-                assert_almost_equal(t.rz, rot)
-                assert_almost_equal(t.tx, trans)
-                assert_almost_equal(t.ty, trans)
-                assert_almost_equal(t.tz, trans)
+                assert_almost_equal(t.rotation, angle)
+                assert_almost_equal(t.translation, translation)
 
     def test_call(self):
         t = transform.EuclideanTransform(angle=(np.pi, np.pi, np.pi),
@@ -194,13 +186,9 @@ class TestSimilarityTransform(object):
                     translation[:] = trans
                     t = transform.SimilarityTransform(scale=scale, angle=angle,
                                                       translation=translation)
-                    assert_almost_equal(t.s, scale)
-                    assert_almost_equal(t.rx, rot)
-                    assert_almost_equal(t.ry, rot)
-                    assert_almost_equal(t.rz, rot)
-                    assert_almost_equal(t.tx, trans)
-                    assert_almost_equal(t.ty, trans)
-                    assert_almost_equal(t.tz, trans)
+                    assert_almost_equal(t.scale, scale)
+                    assert_almost_equal(t.rotation, angle)
+                    assert_almost_equal(t.translation, translation)
 
     def test_call(self):
         t = transform.SimilarityTransform(angle=(np.pi, np.pi, np.pi),
@@ -229,20 +217,13 @@ class TestAffineTransform(object):
             for sx in np.linspace(0.1, 4, 5):
                 for trans in np.linspace(-100, 100, 10):
                     translation[:] = trans
-                    sy = sx + 0.1
-                    sz = sx + 0.2
-                    t = transform.AffineTransform(scale=(sx, sy, sz),
+                    scale = (sx, sx + 0.1, sx + 0.2)
+                    t = transform.AffineTransform(scale=scale,
                                                   angle=angle,
                                                   translation=translation)
-                    assert_almost_equal(t.sx, sx)
-                    assert_almost_equal(t.sy, sy)
-                    assert_almost_equal(t.sz, sz)
-                    assert_almost_equal(t.rx, rot)
-                    assert_almost_equal(t.ry, rot)
-                    assert_almost_equal(t.rz, rot)
-                    assert_almost_equal(t.tx, trans)
-                    assert_almost_equal(t.ty, trans)
-                    assert_almost_equal(t.tz, trans)
+                    assert_almost_equal(t.scale, scale)
+                    assert_almost_equal(t.rotation, angle)
+                    assert_almost_equal(t.translation, translation)
 
     def test_inverse(self):
         t = transform.AffineTransform(scale=(1, 2, 3), angle=(1, 2, 3),

@@ -20,6 +20,56 @@ def _extract_shear_axis(axis):
         return axis1, axis2
 
 
+def _remove_scale_and_shear(tform):
+    if hasattr(tform, 'remove_translation'):
+        tform = tform.remove_translation()
+    else:
+        tform = tform
+
+    removed = tform.matrix.copy()
+
+    # scale factor on x-axis
+    scx = np.sqrt(np.sum(removed[:3, 0]**2))
+
+    # normalize column 1
+    removed[:, 0] /= scx
+
+    # compute xy shear factor and make column 2 orthogonal to column 1
+    shxy  = removed[:, 0].dot(removed[:, 1])
+    removed[:, 1] -= shxy * removed[:, 0]
+
+    # scale factor on y-axis
+    scy = np.sqrt(np.sum(removed[:3, 1]**2))
+
+    # normalize column 2
+    removed[:, 1] /= scy
+
+    # compute xz shear factor and make column 3 orthogonal to column 1
+    shxz = removed[:, 0].dot(removed[:, 2])
+    removed[:, 2] -= shxz * removed[:, 0]
+    # compute yz shear factor and make column 3 orthogonal to column 2
+    shyz  = removed[:, 1].dot(removed[:, 2])
+    removed[:, 2] -= shyz * removed[:, 1]
+
+    # scale factor on z-axis
+    scz = np.sqrt(np.sum(removed[:3, 2]**2))
+
+    # normalize column 3 and xz, yz shears
+    removed[:, 2] /= scz
+    shxz /= scz
+    shyz /= scz
+
+    # negate matrix if determinant is smaller than 0 since we face a coordinate
+    # system flip in this case
+    if np.linalg.det(removed) < 0:
+        removed *= -1
+        scx *= -1
+        scy *= -1
+        scz *= -1
+
+    return (scx, scy, scz), (shxy, shxz, shyz), tform.__class__(matrix=removed)
+
+
 class MatrixTransform(object):
 
     def __init__(self, matrix=None):
@@ -162,44 +212,42 @@ class TranslationTransform(MatrixTransform):
             self.matrix = np.identity(4, dtype=np.double)
             self.matrix[axis - 1, 3] = translation
 
+    def remove_translation(self):
+        """Return new transform with translation removed.
+
+        Returns
+        -------
+        removed : object
+            Transform object with translation removed.
+
+        """
+
+        # perspective has to be removed before translation
+        if hasattr(self, 'remove_perspective'):
+            tform = self.remove_perspective()
+        else:
+            tform = self
+
+        removed = tform.matrix.copy()
+        removed[:3, 3] = 0
+        return self.__class__(matrix=removed)
+
     @property
-    def tx(self):
-        """Translation in x-axis direction.
+    def translation(self):
+        """Translation in x, y and z-axis direction, respectively.
 
         Returns
         -------
         tx : float
-            Translation.
-
-        """
-
-        return self.matrix[0, 3]
-
-    @property
-    def ty(self):
-        """Translation in y-axis direction.
-
-        Returns
-        -------
+            Translation in x-axis direction.
         ty : float
-            Translation.
-
-        """
-
-        return self.matrix[1, 3]
-
-    @property
-    def tz(self):
-        """Translation in z-axis direction.
-
-        Returns
-        -------
+            Translation in y-axis direction.
         tz : float
-            Translation.
+            Translation in z-axis direction.
 
         """
 
-        return self.matrix[2, 3]
+        return self.matrix[:3, 3]
 
 
 class ScaleTransform(MatrixTransform):
@@ -225,45 +273,37 @@ class ScaleTransform(MatrixTransform):
             self.matrix = np.identity(4, dtype=np.double)
             self.matrix[axis - 1, axis - 1] *= scale
 
-    @property
-    def sx(self):
-        """Scale factor in x-axis direction.
+    def remove_scale(self):
+        """Return new transform with scale removed.
+
+        This also removes the shear from the matrix since this is not separable
+        from removing the scale.
 
         Returns
         -------
-        sx : float
-            Scale factor.
+        removed : object
+            Transform object with scale and shear removed.
 
         """
 
-        return np.sqrt(np.sum(self.matrix[:3, 0]**2))
+        return _remove_scale_and_shear(self)[-1]
 
     @property
-    def sy(self):
-        """Scale factor in y-axis direction.
+    def scale(self):
+        """Scale factors on x, y and z-axis.
 
         Returns
         -------
-        sy : float
-            Scale factor.
+        scx : float
+            Scale factor on x-axis.
+        scy : float
+            Scale factor on y-axis.
+        scz : float
+            Scale factor on z-axis.
 
         """
 
-        return np.sqrt(np.sum(self.matrix[:3, 1]**2))
-
-    @property
-    def sz(self):
-        """Scale factor in z-axis direction.
-
-        Returns
-        -------
-        sz : float
-            Scale factor.
-
-        """
-
-        return np.sqrt(np.sum(self.matrix[:3, 2]**2))
-
+        return _remove_scale_and_shear(self)[0]
 
 
 class RotationTransform(MatrixTransform):
@@ -301,6 +341,23 @@ class RotationTransform(MatrixTransform):
                                         [-np.sin(angle), np.cos(angle), 0, 0],
                                         [            0,              0, 1, 0],
                                         [            0,              0, 0, 1]])
+
+    @property
+    def rotation(self):
+        if hasattr(self, 'remove_scale'):
+            tform = self.remove_scale()
+        elif hasattr(self, 'remove_shear'):
+            tform = self.remove_shear()
+        else:
+            tform = self
+
+        rx = np.arctan2(-tform.matrix[2, 1], tform.matrix[2, 2])
+        ry = np.arctan2(tform.matrix[2, 0],
+                        np.sqrt(tform.matrix[2, 1]**2 + tform.matrix[2, 2]**2))
+        rz = np.arctan2(-tform.matrix[1, 0], tform.matrix[0, 0])
+
+        return (rx, ry, rz)
+
 
     @property
     def rx(self):
@@ -383,6 +440,38 @@ class ShearTransform(MatrixTransform):
             axis1, axis2 = _extract_shear_axis(axis)
             self.matrix[axis2 - 1, axis1 - 1] = shear
 
+    def remove_shear(self):
+        """Return new transform with shear removed.
+
+        This also removes the scale from the matrix since this is not separable
+        from removing the shear.
+
+        Returns
+        -------
+        removed : object
+            Transform object with shear and scale removed.
+
+        """
+
+        return _remove_scale_and_shear(self)[-1]
+
+    @property
+    def shear(self):
+        """Shear factors.
+
+        Returns
+        -------
+        shxy : float
+            Shear on x and y affected by shear.
+        shxz : float
+            Shear on x and z affected by shear.
+        shyz : float
+            Shear on y and z affected by shear.
+
+        """
+
+        return _remove_scale_and_shear(self)[0]
+
 
 class PerspectiveTransform(MatrixTransform):
 
@@ -407,63 +496,41 @@ class PerspectiveTransform(MatrixTransform):
             self.matrix = np.identity(4, dtype=np.double)
             self.matrix[3, axis - 1] = perspective
 
-    @property
-    def _perspective(self):
-        perspective_removed = self.matrix.copy()
-        perspective_removed[3] = (0, 0, 0, 1)
-        return np.linalg.solve(perspective_removed.T, self.matrix[3])
+    def remove_perspective(self):
+        """Return new transform with perspective removed.
+
+        Returns
+        -------
+        removed : object
+            Transform object with perspective removed.
+
+        """
+
+        included = np.identity((4, 4), dtype=np.double)
+        included[:, 3] = self._perspective
+        removed = np.linalg.solve(included, self.matrix)
+        return self.__class__(matrix=removed)
 
     @property
-    def px(self):
+    def perspective(self):
         """Perspective factor on x-axis.
 
         Returns
         -------
         px : float
-            Perspective factor.
-
-        """
-
-        return self._perspective[0]
-
-    @property
-    def py(self):
-        """Perspective factor on y-axis.
-
-        Returns
-        -------
+            Perspective factor on x-axis.
         py : float
-            Perspective factor.
-
-        """
-
-        return self._perspective[1]
-
-    @property
-    def pz(self):
-        """Perspective factor on z-axis.
-
-        Returns
-        -------
+            Perspective factor on y-axis.
         pz : float
-            Perspective factor.
-
-        """
-
-        return self._perspective[2]
-
-    @property
-    def pw(self):
-        """Perspective factor on 4th coordinate component (=1).
-
-        Returns
-        -------
+            Perspective factor on z-axis.
         pw : float
-            Perspective factor.
+            Perspective factor on 4th coordinate component.
 
         """
 
-        return self._perspective[3]
+        removed = self.matrix.copy()
+        removed[3] = (0, 0, 0, 1)
+        return np.linalg.solve(removed.T, self.matrix[3])
 
 
 class EuclideanTransform(TranslationTransform, RotationTransform):
@@ -557,17 +624,17 @@ class SimilarityTransform(TranslationTransform, ScaleTransform,
             self.matrix = tform.matrix
 
     @property
-    def s(self):
+    def scale(self):
         """Scale factor.
 
         Returns
         -------
-        s : float
+        scale : float
             Scale factor.
 
         """
 
-        return np.mean((self.sx, self.sy, self.sz))
+        return np.mean(super(SimilarityTransform, self).scale)
 
 
 class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
