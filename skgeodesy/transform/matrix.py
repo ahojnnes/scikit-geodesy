@@ -413,7 +413,7 @@ class ShearTransform(MatrixTransform):
 
         """
 
-        return _remove_scale_and_shear(self)[0]
+        return _remove_scale_and_shear(self)[1]
 
 
 class PerspectiveTransform(MatrixTransform):
