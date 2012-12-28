@@ -3,12 +3,39 @@ from numpy.testing import run_module_suite, assert_almost_equal
 from skgeodesy import transform
 
 
+AXIS_NAMES = ['x', 'y', 'z']
+
+
+def test_scale_init():
+    for axis in (1, 2, 3):
+        for scale in np.linspace(0.1, 4, 10):
+            t = transform.ScaleTransform(scale=scale, axis=axis)
+            assert_almost_equal(getattr(t, 's%s' % AXIS_NAMES[axis-1]), scale)
+
+
+def test_scale_call():
+    t1 = transform.ScaleTransform(scale=0.1, axis=1)
+    assert_almost_equal(t1([1, 1, 1]), [0.1, 1, 1])
+    t2 = transform.ScaleTransform(scale=0.1, axis=2)
+    assert_almost_equal(t2([1, 1, 1]), [1, 0.1, 1])
+    t3 = transform.ScaleTransform(scale=0.1, axis=3)
+    assert_almost_equal(t3([1, 1, 1]), [1, 1, 0.1])
+    t = t1.before(t2).before(t3)
+    assert_almost_equal(t([1, 1, 1]), [0.1, 0.1, 0.1])
+
+
+def test_scale_inverse():
+    t = transform.ScaleTransform(scale=0.1, axis=1)
+    tinv = t.inverse()
+    coord = [1, 2, 3]
+    assert_almost_equal(coord, tinv(t(coord)))
+
+
 def test_rotation_init():
-    axis_idx = ['x', 'y', 'z']
-    for axis in range(1, 4):
+    for axis in (1, 2, 3):
         for angle in np.linspace(-np.pi / 2, np.pi / 2, 10):
             t = transform.RotationTransform(angle=angle, axis=axis)
-            assert_almost_equal(getattr(t, 'r%s' % axis_idx[axis-1]), angle)
+            assert_almost_equal(getattr(t, 'r%s' % AXIS_NAMES[axis-1]), angle)
 
 
 def test_rotation_call():
