@@ -384,6 +384,36 @@ class ShearTransform(MatrixTransform):
             self.matrix[axis2 - 1, axis1 - 1] = shear
 
 
+class PerspectiveTransform(MatrixTransform):
+
+    def __init__(self, matrix=None, perspective=0, axis=1):
+        """Create perspective transform.
+
+        Parameters
+        ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
+        perspective : float, optional
+            Perspective factor.
+        axis : {1, 2, 3}, optional
+            Index of perspective axis.
+
+        """
+
+        if matrix is not None:
+            self.matrix = matrix
+        else:
+            _check_axis(axis)
+            self.matrix = np.identity(4, dtype=np.double)
+            self.matrix[3, axis - 1] = perspective
+
+    @property
+    def perspective(self):
+        perspective_removed = self.matrix.copy()
+        perspective_removed[3] = (0, 0, 0, 1)
+        return np.linalg.solve(perspective_removed.T, self.matrix[3])
+
+
 class EuclideanTransform(TranslationTransform, RotationTransform):
 
     def __init__(self, matrix=None, angle=(0, 0, 0), translation=(0, 0, 0)):
