@@ -113,7 +113,7 @@ class RotationTransform(CartesicTransform):
         angle : float, optional
             Counter-clockwise angle in radians.
         axis : {1, 2, 3}, optional
-            Index of rotation axis.
+            Index of rotation axis (x, y, z).
 
         """
 
@@ -139,8 +139,8 @@ class RotationTransform(CartesicTransform):
                 raise ValueError('Axis must be 1, 2 or 3.')
 
     @property
-    def angle1(self):
-        """Rotation angle aroung axis 1.
+    def rx(self):
+        """Rotation angle around x-axis.
 
         Returns
         -------
@@ -152,8 +152,8 @@ class RotationTransform(CartesicTransform):
         return np.arctan2(-self.matrix[2, 1], self.matrix[2, 2])
 
     @property
-    def angle2(self):
-        """Rotation angle aroung axis 2.
+    def ry(self):
+        """Rotation angle around y-axis.
 
         Returns
         -------
@@ -166,8 +166,8 @@ class RotationTransform(CartesicTransform):
                           np.sqrt(self.matrix[2, 1]**2 + self.matrix[2, 2]**2))
 
     @property
-    def angle3(self):
-        """Rotation angle aroung axis 3.
+    def rz(self):
+        """Rotation angle around z-axis.
 
         Returns
         -------
@@ -177,3 +177,80 @@ class RotationTransform(CartesicTransform):
         """
 
         return np.arctan2(-self.matrix[1, 0], self.matrix[0, 0])
+
+
+class SimilarityTransform(RotationTransform):
+
+    def __init__(self, matrix=None, scale=1, angles=(0, 0, 0),
+                 translation=(0, 0, 0)):
+
+        """Create similarity transform.
+
+        Parameters
+        ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
+        scale : float, optional
+            Scaling factor.
+        angles : (3, ) array_like, optional
+            Counter-clockwise angle in radians around x, y and z axis,
+            respectively.
+        translation : (3, ) array_like, optional
+            Translation in x, y and z direction.
+
+        """
+
+        if matrix is not None:
+            self.matrix = matrix
+        else:
+            rot1 = RotationTransform(angle=angles[0], axis=1)
+            rot2 = RotationTransform(angle=angles[1], axis=2)
+            rot3 = RotationTransform(angle=angles[2], axis=3)
+            rot = rot1.before(rot2).before(rot3)
+
+            self.matrix = rot.matrix
+            self.matrix[:3, :3] *= scale
+            self.matrix[:3, 3] = translation
+
+    @property
+    def scale(self):
+        return np.mean(np.sqrt(np.sum(self.matrix[:3, :3]**2, axis=1)))
+
+    @property
+    def tx(self):
+        """Translation in x-axis direction.
+
+        Returns
+        -------
+        tx : float
+            Translation.
+
+        """
+
+        return self.matrix[0, 3]
+
+    @property
+    def ty(self):
+        """Translation in y-axis direction.
+
+        Returns
+        -------
+        ty : float
+            Translation.
+
+        """
+
+        return self.matrix[1, 3]
+
+    @property
+    def tz(self):
+        """Translation in z-axis direction.
+
+        Returns
+        -------
+        tz : float
+            Translation.
+
+        """
+
+        return self.matrix[2, 3]
