@@ -359,63 +359,6 @@ class RotationTransform(MatrixTransform):
         return (rx, ry, rz)
 
 
-    @property
-    def rx(self):
-        """Rotation angle around x-axis.
-
-        Returns
-        -------
-        rx : float
-            Angle in radians.
-
-        """
-
-        a = -self.matrix[2, 1]
-        b = self.matrix[2, 2]
-        if isinstance(self, ScaleTransform):
-            a /= abs(self.sy)
-            b /= abs(self.sz)
-        return np.arctan2(a, b)
-
-    @property
-    def ry(self):
-        """Rotation angle around y-axis.
-
-        Returns
-        -------
-        ry : float
-            Angle in radians.
-
-        """
-
-        a = self.matrix[2, 0]
-        b = self.matrix[2, 1]
-        c = self.matrix[2, 2]
-        if isinstance(self, ScaleTransform):
-            a /= abs(self.sx)
-            b /= abs(self.sy)
-            c /= abs(self.sz)
-        return np.arctan2(a, np.sqrt(b**2 + c**2))
-
-    @property
-    def rz(self):
-        """Rotation angle around z-axis.
-
-        Returns
-        -------
-        rz : float
-            Angle in radians.
-
-        """
-
-        a = -self.matrix[1, 0]
-        b = self.matrix[0, 0]
-        if isinstance(self, ScaleTransform):
-            a /= abs(self.sx)
-            b /= abs(self.sx)
-        return np.arctan2(a, b)
-
-
 class ShearTransform(MatrixTransform):
 
     def __init__(self, matrix=None, shear=0, axis=11):
