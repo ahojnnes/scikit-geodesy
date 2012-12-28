@@ -1,3 +1,3 @@
-from .cartesic import CartesicTransform, TranslationTransform, ScaleTransform, \
-                      RotationTransform, ShearTransform, SimilarityTransform, \
-                      AffineTransform
+from .matrix import MatrixTransform, TranslationTransform, ScaleTransform, \
+                    RotationTransform, ShearTransform, SimilarityTransform, \
+                    AffineTransform

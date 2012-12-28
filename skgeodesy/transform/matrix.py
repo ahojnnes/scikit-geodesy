@@ -6,7 +6,7 @@ def _check_axis(axis):
         raise ValueError('Axis must be 1, 2 or 3.')
 
 
-class CartesicTransform(object):
+class MatrixTransform(object):
 
     def __init__(self, matrix=None):
         """Create cartesic transform.
@@ -91,13 +91,13 @@ class CartesicTransform(object):
 
         """
 
-        if not isinstance(other, CartesicTransform):
+        if not isinstance(other, MatrixTransform):
             raise TypeError('Cannot combine transformations '
                             'of differing types.')
         if type(self) == type(other):
             tform = self.__class__
         else:
-            tform = CartesicTransform
+            tform = MatrixTransform
         return tform(matrix=other.matrix.dot(self.matrix))
 
     def after(self, other):
@@ -115,17 +115,17 @@ class CartesicTransform(object):
 
         """
 
-        if not isinstance(other, CartesicTransform):
+        if not isinstance(other, MatrixTransform):
             raise TypeError('Cannot combine transformations '
                             'of differing types.')
         if type(self) == type(other):
             tform = self.__class__
         else:
-            tform = CartesicTransform
+            tform = MatrixTransform
         return tform(matrix=self.matrix.dot(other.matrix))
 
 
-class TranslationTransform(CartesicTransform):
+class TranslationTransform(MatrixTransform):
 
     def __init__(self, matrix=None, translation=0, axis=1):
         """Create scale transform.
@@ -188,7 +188,7 @@ class TranslationTransform(CartesicTransform):
         return self.matrix[2, 3]
 
 
-class ScaleTransform(CartesicTransform):
+class ScaleTransform(MatrixTransform):
 
     def __init__(self, matrix=None, scale=1, axis=1):
         """Create scale transform.
@@ -252,7 +252,7 @@ class ScaleTransform(CartesicTransform):
 
 
 
-class RotationTransform(CartesicTransform):
+class RotationTransform(MatrixTransform):
 
     def __init__(self, matrix=None, angle=0, axis=1):
         """Create rotation transform.
@@ -345,7 +345,7 @@ class RotationTransform(CartesicTransform):
         return np.arctan2(a, b)
 
 
-class ShearTransform(CartesicTransform):
+class ShearTransform(MatrixTransform):
 
     def __init__(self, matrix=None, shear=(0, 0), axis=1):
         """Create shear transform.
