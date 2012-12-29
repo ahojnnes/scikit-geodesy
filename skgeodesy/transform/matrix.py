@@ -449,8 +449,8 @@ class PerspectiveTransform(MatrixTransform):
 
         """
 
-        included = np.identity((4, 4), dtype=np.double)
-        included[:, 3] = self._perspective
+        included = np.identity(4, dtype=np.double)
+        included[3, :] = self.perspective
         removed = np.linalg.solve(included, self.matrix)
         return self.__class__(matrix=removed)
 
@@ -488,10 +488,10 @@ class EuclideanTransform(TranslationTransform, RotationTransform):
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
         angle : (3, ) array_like, optional
-            Counter-clockwise angle in radians around x, y and z axis,
+            Counter-clockwise angles in radians around x, y and z axis,
             respectively.
         translation : (3, ) array_like, optional
-            Translation in x, y and z direction.
+            Translations in x, y and z direction.
 
         """
 
@@ -531,12 +531,12 @@ class SimilarityTransform(TranslationTransform, ScaleTransform,
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
         scale : float, optional
-            Scaling factor.
+            Scaling factors.
         angle : (3, ) array_like, optional
-            Counter-clockwise angle in radians around x, y and z axis,
+            Counter-clockwise angles in radians around x, y and z axis,
             respectively.
         translation : (3, ) array_like, optional
-            Translation in x, y and z direction.
+            Translations in x, y and z direction.
 
         """
 
@@ -587,19 +587,19 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
                  translation=(0, 0, 0), shear=()):
         """Create affine transform.
 
-        This transform contains translation, rotation, scaling and shearing.
+        This transform contains translation, rotation, scaling and shear.
 
         Parameters
         ----------
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
         scale : float, optional
-            Scaling factor.
+            Scaling factors.
         angle : (3, ) array_like, optional
-            Counter-clockwise angle in radians around x, y and z axis,
+            Counter-clockwise angles in radians around x, y and z axis,
             respectively.
         translation : (3, ) array_like, optional
-            Translation in x, y and z direction.
+            Translations in x, y and z direction.
         shear : (N, 2) array_like, optional
             Shear factors with each row as `(axis, shear)`. See `ShearTransform`
             for usage.
@@ -635,5 +635,72 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
             scale = scale1.before(scale2).before(scale3)
 
             tform = trans.after(shear.after(rot.after(scale)))
+
+            self.matrix = tform.matrix
+
+
+class ProjectiveTransform(TranslationTransform, ScaleTransform, RotationTransform,
+                      ShearTransform, PerspectiveTransform):
+
+    def __init__(self, matrix=None, scale=(1, 1, 1), angle=(0, 0, 0),
+                 translation=(0, 0, 0), shear=(), perspective=(0, 0, 0)):
+        """Create projective transform.
+
+        This transform contains translation, rotation, scaling, shear
+        and perspective.
+
+        Parameters
+        ----------
+        matrix : (4, 4) array, optional
+            Homogeneous transform matrix.
+        scale : float, optional
+            Scaling factors.
+        angle : (3, ) array_like, optional
+            Counter-clockwise angles in radians around x, y and z axis,
+            respectively.
+        translation : (3, ) array_like, optional
+            Translations in x, y and z direction.
+        shear : (N, 2) array_like, optional
+            Shear factors with each row as `(axis, shear)`. See `ShearTransform`
+            for usage.
+        perspective : (3, ) array_like, optional
+            Perspective factors.
+
+        """
+
+        if matrix is not None:
+            self.matrix = matrix
+        else:
+            # NOTE: this can be speeded up by combined application of scale and
+            # and translation, but for readability the object-oriented approach
+            # is chosen
+
+            persp1 = PerspectiveTransform(perspective=perspective[0], axis=1)
+            persp2 = PerspectiveTransform(perspective=perspective[1], axis=2)
+            persp3 = PerspectiveTransform(perspective=perspective[2], axis=3)
+            persp = persp1.before(persp2).before(persp3)
+
+            trans1 = TranslationTransform(translation=translation[0], axis=1)
+            trans2 = TranslationTransform(translation=translation[1], axis=2)
+            trans3 = TranslationTransform(translation=translation[2], axis=3)
+            trans = trans1.before(trans2).before(trans3)
+
+            shear_tform = MatrixTransform()
+            for axis, shear_factor in shear:
+                tf = ShearTransform(shear=shear_factor, axis=axis)
+                shear_tform = shear_tform.before(tf)
+            shear = shear_tform
+
+            rot1 = RotationTransform(angle=angle[0], axis=1)
+            rot2 = RotationTransform(angle=angle[1], axis=2)
+            rot3 = RotationTransform(angle=angle[2], axis=3)
+            rot = rot1.before(rot2).before(rot3)
+
+            scale1 = ScaleTransform(scale=scale[0], axis=1)
+            scale2 = ScaleTransform(scale=scale[1], axis=2)
+            scale3 = ScaleTransform(scale=scale[2], axis=3)
+            scale = scale1.before(scale2).before(scale3)
+
+            tform = persp.after(trans.after(shear.after(rot.after(scale))))
 
             self.matrix = tform.matrix

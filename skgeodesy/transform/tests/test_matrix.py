@@ -211,13 +211,13 @@ class TestSimilarityTransform(object):
 class TestAffineTransform(object):
 
     def test_init(self):
-        translation = np.zeros((3, ))
         for rot in np.linspace(-np.pi / 2, np.pi / 2, 5):
             angle = (rot, rot, rot)
             for sx in np.linspace(0.1, 4, 5):
+                scale = (sx, sx + 0.1, sx + 0.2)
                 for trans in np.linspace(-100, 100, 10):
-                    translation[:] = trans
-                    scale = (sx, sx + 0.1, sx + 0.2)
+                    translation = (trans, trans, trans)
+
                     t = transform.AffineTransform(scale=scale,
                                                   angle=angle,
                                                   translation=translation)
@@ -229,6 +229,36 @@ class TestAffineTransform(object):
         t = transform.AffineTransform(scale=(1, 2, 3), angle=(1, 2, 3),
                                       translation=(1, 2, 3),
                                       shear=((13, 1), (32, 2), (21, 3)))
+        tinv = t.inverse()
+        coord = [1, 2, 3]
+        assert_almost_equal(coord, tinv(t(coord)))
+
+
+class TestProjectiveTransform(object):
+
+    def test_init(self):
+        for rot in np.linspace(-np.pi / 3, np.pi / 3, 6):
+            angle = (rot, rot, rot)
+            for sx in np.linspace(0.1, 4, 5):
+                scale = (sx, sx + 0.1, sx + 0.2)
+                for trans in np.linspace(-100, 100, 5):
+                    translation = (trans, trans, trans)
+                    for persp in np.linspace(-10, 10, 5):
+                        perspective = (persp, persp, persp)
+                        t = transform.ProjectiveTransform(scale=scale,
+                                                      angle=angle,
+                                                      translation=translation,
+                                                      perspective=perspective)
+                        assert_almost_equal(t.scale, scale)
+                        assert_almost_equal(t.rotation, angle)
+                        assert_almost_equal(t.translation, translation)
+                        assert_almost_equal(t.perspective[:3], perspective)
+
+    def test_inverse(self):
+        t = transform.ProjectiveTransform(scale=(1, 2, 3), angle=(1, 2, 3),
+                                          translation=(1, 2, 3),
+                                          shear=((13, 1), (32, 2), (21, 3)),
+                                          perspective=(0.1, 0.2, 0.3))
         tinv = t.inverse()
         coord = [1, 2, 3]
         assert_almost_equal(coord, tinv(t(coord)))
