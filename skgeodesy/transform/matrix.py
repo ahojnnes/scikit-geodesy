@@ -198,9 +198,9 @@ class TranslationTransform(MatrixTransform):
         ----------
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
-        scale : float, optional
+        translation : (N, ) array_like, optional
             Scale factor.
-        axis : {1, 2, 3}, optional
+        axis : (N, ) array_like of {1, 2, 3}, optional
             Index of rotation axis (x, y, z).
 
         """
@@ -208,9 +208,13 @@ class TranslationTransform(MatrixTransform):
         if matrix is not None:
             self.matrix = matrix
         else:
-            _check_axis(axis)
             self.matrix = np.identity(4, dtype=np.double)
-            self.matrix[axis - 1, 3] = translation
+            if not hasattr(axis, '__iter__'):
+                axis = (axis, )
+                translation = (translation, )
+            for ax, tr in zip(axis, translation):
+                _check_axis(ax)
+                self.matrix[ax - 1, 3] = tr
 
     def remove_translation(self):
         """Return new transform with translation removed.
@@ -259,9 +263,9 @@ class ScaleTransform(MatrixTransform):
         ----------
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
-        scale : float, optional
+        scale : (N, ) array_like, optional
             Scale factor.
-        axis : {1, 2, 3}, optional
+        axis : (N, ) array_like of {1, 2, 3}, optional
             Index of rotation axis (x, y, z).
 
         """
@@ -269,9 +273,13 @@ class ScaleTransform(MatrixTransform):
         if matrix is not None:
             self.matrix = matrix
         else:
-            _check_axis(axis)
             self.matrix = np.identity(4, dtype=np.double)
-            self.matrix[axis - 1, axis - 1] *= scale
+            if not hasattr(axis, '__iter__'):
+                axis = (axis, )
+                scale = (scale, )
+            for ax, sc in zip(axis, scale):
+                _check_axis(ax)
+                self.matrix[ax - 1, ax - 1] *= sc
 
     def remove_scale(self):
         """Return new transform with scale removed.
@@ -315,9 +323,9 @@ class RotationTransform(MatrixTransform):
         ----------
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
-        angle : float, optional
+        angle : (N, ) array_like, optional
             Counter-clockwise angle in radians.
-        axis : {1, 2, 3}, optional
+        axis : (N, ) array_like of {1, 2, 3}, optional
             Index of rotation axis (x, y, z).
 
         """
@@ -325,22 +333,30 @@ class RotationTransform(MatrixTransform):
         if matrix is not None:
             self.matrix = matrix
         else:
-            _check_axis(axis)
-            if axis == 1:
-                self.matrix = np.array([[1,              0,             0, 0],
-                                        [0,  np.cos(angle), np.sin(angle), 0],
-                                        [0, -np.sin(angle), np.cos(angle), 0],
-                                        [0,              0,             0, 1]])
-            elif axis == 2:
-                self.matrix = np.array([[np.cos(angle), 0, -np.sin(angle), 0],
-                                        [            0, 1,              0, 0],
-                                        [np.sin(angle), 0,  np.cos(angle), 0],
-                                        [            0, 0,              0, 1]])
-            elif axis == 3:
-                self.matrix = np.array([[ np.cos(angle), np.sin(angle), 0, 0],
-                                        [-np.sin(angle), np.cos(angle), 0, 0],
-                                        [            0,              0, 1, 0],
-                                        [            0,              0, 0, 1]])
+            self.matrix = np.identity(4, dtype=np.double)
+            if not hasattr(axis, '__iter__'):
+                axis = (axis, )
+                angle = (angle, )
+            for ax, an in zip(axis, angle):
+                _check_axis(ax)
+                if ax == 1:
+                    rot = np.array([[1,           0,          0, 0],
+                                    [0,  np.cos(an), np.sin(an), 0],
+                                    [0, -np.sin(an), np.cos(an), 0],
+                                    [0,           0,          0, 1]])
+                    self.matrix = rot.dot(self.matrix)
+                elif ax == 2:
+                    rot = np.array([[np.cos(an), 0, -np.sin(an), 0],
+                                    [         0, 1,           0, 0],
+                                    [np.sin(an), 0,  np.cos(an), 0],
+                                    [         0, 0,           0, 1]])
+                    self.matrix = rot.dot(self.matrix)
+                elif ax == 3:
+                    rot = np.array([[ np.cos(an), np.sin(an), 0, 0],
+                                    [-np.sin(an), np.cos(an), 0, 0],
+                                    [          0,          0, 1, 0],
+                                    [          0,          0, 0, 1]])
+                    self.matrix = rot.dot(self.matrix)
 
     @property
     def rotation(self):
@@ -425,9 +441,9 @@ class PerspectiveTransform(MatrixTransform):
         ----------
         matrix : (4, 4) array, optional
             Homogeneous transform matrix.
-        perspective : float, optional
+        perspective : (N, ) array_like, optional
             Perspective factor.
-        axis : {1, 2, 3}, optional
+        axis : (N, ) array_like of {1, 2, 3}, optional
             Index of perspective axis.
 
         """
@@ -435,9 +451,14 @@ class PerspectiveTransform(MatrixTransform):
         if matrix is not None:
             self.matrix = matrix
         else:
-            _check_axis(axis)
             self.matrix = np.identity(4, dtype=np.double)
-            self.matrix[3, axis - 1] = perspective
+            if not hasattr(axis, '__iter__'):
+                axis = (axis, )
+                perspective = (perspective, )
+            for ax, pe in zip(axis, perspective):
+                _check_axis(ax)
+                self.matrix[3, ax - 1] = pe
+
 
     def remove_perspective(self):
         """Return new transform with perspective removed.
@@ -502,23 +523,17 @@ class EuclideanTransform(TranslationTransform, RotationTransform):
             # and translation, but for readability the object-oriented approach
             # is chosen
 
-            trans1 = TranslationTransform(translation=translation[0], axis=1)
-            trans2 = TranslationTransform(translation=translation[1], axis=2)
-            trans3 = TranslationTransform(translation=translation[2], axis=3)
-            trans = trans1.before(trans2).before(trans3)
-
-            rot1 = RotationTransform(angle=angle[0], axis=1)
-            rot2 = RotationTransform(angle=angle[1], axis=2)
-            rot3 = RotationTransform(angle=angle[2], axis=3)
-            rot = rot1.before(rot2).before(rot3)
+            trans = TranslationTransform(translation=translation,
+                                         axis=(1, 2, 3))
+            rot = RotationTransform(angle=angle, axis=(1, 2, 3))
 
             tform = trans.after(rot)
 
             self.matrix = tform.matrix
 
 
-class SimilarityTransform(TranslationTransform, ScaleTransform,
-                          RotationTransform):
+class SimilarityTransform(TranslationTransform, RotationTransform,
+                          ScaleTransform):
 
     def __init__(self, matrix=None, scale=1, angle=(0, 0, 0),
                  translation=(0, 0, 0)):
@@ -543,24 +558,10 @@ class SimilarityTransform(TranslationTransform, ScaleTransform,
         if matrix is not None:
             self.matrix = matrix
         else:
-            # NOTE: this can be speeded up by combined application of scale and
-            # and translation, but for readability the object-oriented approach
-            # is chosen
-
-            trans1 = TranslationTransform(translation=translation[0], axis=1)
-            trans2 = TranslationTransform(translation=translation[1], axis=2)
-            trans3 = TranslationTransform(translation=translation[2], axis=3)
-            trans = trans1.before(trans2).before(trans3)
-
-            rot1 = RotationTransform(angle=angle[0], axis=1)
-            rot2 = RotationTransform(angle=angle[1], axis=2)
-            rot3 = RotationTransform(angle=angle[2], axis=3)
-            rot = rot1.before(rot2).before(rot3)
-
-            scale1 = ScaleTransform(scale=scale, axis=1)
-            scale2 = ScaleTransform(scale=scale, axis=2)
-            scale3 = ScaleTransform(scale=scale, axis=3)
-            scale = scale1.before(scale2).before(scale3)
+            trans = TranslationTransform(translation=translation,
+                                         axis=(1, 2, 3))
+            rot = RotationTransform(angle=angle, axis=(1, 2, 3))
+            scale = ScaleTransform(scale=(scale, scale, scale), axis=(1, 2, 3))
 
             tform = trans.after(rot.after(scale))
 
@@ -580,7 +581,7 @@ class SimilarityTransform(TranslationTransform, ScaleTransform,
         return np.mean(super(SimilarityTransform, self).scale)
 
 
-class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
+class AffineTransform(TranslationTransform, RotationTransform, ScaleTransform,
                       ShearTransform):
 
     def __init__(self, matrix=None, scale=(1, 1, 1), angle=(0, 0, 0),
@@ -609,14 +610,10 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
         if matrix is not None:
             self.matrix = matrix
         else:
-            # NOTE: this can be speeded up by combined application of scale and
-            # and translation, but for readability the object-oriented approach
-            # is chosen
-
-            trans1 = TranslationTransform(translation=translation[0], axis=1)
-            trans2 = TranslationTransform(translation=translation[1], axis=2)
-            trans3 = TranslationTransform(translation=translation[2], axis=3)
-            trans = trans1.before(trans2).before(trans3)
+            trans = TranslationTransform(translation=translation,
+                                         axis=(1, 2, 3))
+            rot = RotationTransform(angle=angle, axis=(1, 2, 3))
+            scale = ScaleTransform(scale=scale, axis=(1, 2, 3))
 
             shear_tform = MatrixTransform()
             for axis, shear_factor in shear:
@@ -624,23 +621,13 @@ class AffineTransform(TranslationTransform, ScaleTransform, RotationTransform,
                 shear_tform = shear_tform.before(tf)
             shear = shear_tform
 
-            rot1 = RotationTransform(angle=angle[0], axis=1)
-            rot2 = RotationTransform(angle=angle[1], axis=2)
-            rot3 = RotationTransform(angle=angle[2], axis=3)
-            rot = rot1.before(rot2).before(rot3)
-
-            scale1 = ScaleTransform(scale=scale[0], axis=1)
-            scale2 = ScaleTransform(scale=scale[1], axis=2)
-            scale3 = ScaleTransform(scale=scale[2], axis=3)
-            scale = scale1.before(scale2).before(scale3)
-
             tform = trans.after(shear.after(rot.after(scale)))
 
             self.matrix = tform.matrix
 
 
-class ProjectiveTransform(TranslationTransform, ScaleTransform, RotationTransform,
-                      ShearTransform, PerspectiveTransform):
+class ProjectiveTransform(TranslationTransform, RotationTransform,
+                          ScaleTransform, ShearTransform, PerspectiveTransform):
 
     def __init__(self, matrix=None, scale=(1, 1, 1), angle=(0, 0, 0),
                  translation=(0, 0, 0), shear=(), perspective=(0, 0, 0)):
@@ -671,36 +658,12 @@ class ProjectiveTransform(TranslationTransform, ScaleTransform, RotationTransfor
         if matrix is not None:
             self.matrix = matrix
         else:
-            # NOTE: this can be speeded up by combined application of scale and
-            # and translation, but for readability the object-oriented approach
-            # is chosen
+            affine = AffineTransform(matrix=matrix, scale=scale, angle=angle,
+                                     translation=translation, shear=shear)
 
-            persp1 = PerspectiveTransform(perspective=perspective[0], axis=1)
-            persp2 = PerspectiveTransform(perspective=perspective[1], axis=2)
-            persp3 = PerspectiveTransform(perspective=perspective[2], axis=3)
-            persp = persp1.before(persp2).before(persp3)
+            perspective = PerspectiveTransform(perspective=perspective,
+                                               axis=(1, 2, 3))
 
-            trans1 = TranslationTransform(translation=translation[0], axis=1)
-            trans2 = TranslationTransform(translation=translation[1], axis=2)
-            trans3 = TranslationTransform(translation=translation[2], axis=3)
-            trans = trans1.before(trans2).before(trans3)
-
-            shear_tform = MatrixTransform()
-            for axis, shear_factor in shear:
-                tf = ShearTransform(shear=shear_factor, axis=axis)
-                shear_tform = shear_tform.before(tf)
-            shear = shear_tform
-
-            rot1 = RotationTransform(angle=angle[0], axis=1)
-            rot2 = RotationTransform(angle=angle[1], axis=2)
-            rot3 = RotationTransform(angle=angle[2], axis=3)
-            rot = rot1.before(rot2).before(rot3)
-
-            scale1 = ScaleTransform(scale=scale[0], axis=1)
-            scale2 = ScaleTransform(scale=scale[1], axis=2)
-            scale3 = ScaleTransform(scale=scale[2], axis=3)
-            scale = scale1.before(scale2).before(scale3)
-
-            tform = persp.after(trans.after(shear.after(rot.after(scale))))
+            tform = perspective.after(affine)
 
             self.matrix = tform.matrix
