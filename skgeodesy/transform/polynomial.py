@@ -14,8 +14,8 @@ def _solve_for_order(num_coeffs):
     """
 
     # substituted coefficients
-    p = 11 - 36 / 3.
-    q = 432 / 27. - 66 / 3. + 6 - 2 * num_coeffs
+    p = -1
+    q = -2 * num_coeffs
 
     # D always > 0
     D = (q / 2)**2 + (p / 3)**3
@@ -27,7 +27,7 @@ def _solve_for_order(num_coeffs):
     z = u + v
 
     # re-substitute
-    order = z - 6 / 3.
+    order = z - 2
 
     return int(order)
 
