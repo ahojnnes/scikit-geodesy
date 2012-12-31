@@ -191,7 +191,7 @@ class MatrixTransform(object):
 
 class TranslationTransform(MatrixTransform):
 
-    def __init__(self, matrix=None, translation=0, axis=1):
+    def __init__(self, matrix=None, translation=None, axis=None):
         """Create scale transform.
 
         Parameters
@@ -209,12 +209,13 @@ class TranslationTransform(MatrixTransform):
             self.matrix = matrix
         else:
             self.matrix = np.identity(4, dtype=np.double)
-            if not hasattr(axis, '__iter__'):
-                axis = (axis, )
-                translation = (translation, )
-            for ax, tr in zip(axis, translation):
-                _check_axis(ax)
-                self.matrix[ax - 1, 3] = tr
+            if axis is not None:
+                if not hasattr(axis, '__iter__'):
+                    axis = (axis, )
+                    translation = (translation, )
+                for ax, tr in zip(axis, translation):
+                    _check_axis(ax)
+                    self.matrix[ax - 1, 3] = tr
 
     def remove_translation(self):
         """Return new transform with translation removed.
@@ -256,7 +257,7 @@ class TranslationTransform(MatrixTransform):
 
 class ScaleTransform(MatrixTransform):
 
-    def __init__(self, matrix=None, scale=1, axis=1):
+    def __init__(self, matrix=None, scale=None, axis=None):
         """Create scale transform.
 
         Parameters
@@ -274,12 +275,13 @@ class ScaleTransform(MatrixTransform):
             self.matrix = matrix
         else:
             self.matrix = np.identity(4, dtype=np.double)
-            if not hasattr(axis, '__iter__'):
-                axis = (axis, )
-                scale = (scale, )
-            for ax, sc in zip(axis, scale):
-                _check_axis(ax)
-                self.matrix[ax - 1, ax - 1] *= sc
+            if axis is not None:
+                if not hasattr(axis, '__iter__'):
+                    axis = (axis, )
+                    scale = (scale, )
+                for ax, sc in zip(axis, scale):
+                    _check_axis(ax)
+                    self.matrix[ax - 1, ax - 1] *= sc
 
     def remove_scale(self):
         """Return new transform with scale removed.
@@ -316,7 +318,7 @@ class ScaleTransform(MatrixTransform):
 
 class RotationTransform(MatrixTransform):
 
-    def __init__(self, matrix=None, angle=0, axis=1):
+    def __init__(self, matrix=None, angle=None, axis=None):
         """Create rotation transform.
 
         Parameters
@@ -334,29 +336,30 @@ class RotationTransform(MatrixTransform):
             self.matrix = matrix
         else:
             self.matrix = np.identity(4, dtype=np.double)
-            if not hasattr(axis, '__iter__'):
-                axis = (axis, )
-                angle = (angle, )
-            for ax, an in zip(axis, angle):
-                _check_axis(ax)
-                if ax == 1:
-                    rot = np.array([[1,           0,          0, 0],
-                                    [0,  np.cos(an), np.sin(an), 0],
-                                    [0, -np.sin(an), np.cos(an), 0],
-                                    [0,           0,          0, 1]])
-                    self.matrix = rot.dot(self.matrix)
-                elif ax == 2:
-                    rot = np.array([[np.cos(an), 0, -np.sin(an), 0],
-                                    [         0, 1,           0, 0],
-                                    [np.sin(an), 0,  np.cos(an), 0],
-                                    [         0, 0,           0, 1]])
-                    self.matrix = rot.dot(self.matrix)
-                elif ax == 3:
-                    rot = np.array([[ np.cos(an), np.sin(an), 0, 0],
-                                    [-np.sin(an), np.cos(an), 0, 0],
-                                    [          0,          0, 1, 0],
-                                    [          0,          0, 0, 1]])
-                    self.matrix = rot.dot(self.matrix)
+            if axis is not None:
+                if not hasattr(axis, '__iter__'):
+                    axis = (axis, )
+                    angle = (angle, )
+                for ax, an in zip(axis, angle):
+                    _check_axis(ax)
+                    if ax == 1:
+                        rot = np.array([[1,           0,          0, 0],
+                                        [0,  np.cos(an), np.sin(an), 0],
+                                        [0, -np.sin(an), np.cos(an), 0],
+                                        [0,           0,          0, 1]])
+                        self.matrix = rot.dot(self.matrix)
+                    elif ax == 2:
+                        rot = np.array([[np.cos(an), 0, -np.sin(an), 0],
+                                        [         0, 1,           0, 0],
+                                        [np.sin(an), 0,  np.cos(an), 0],
+                                        [         0, 0,           0, 1]])
+                        self.matrix = rot.dot(self.matrix)
+                    elif ax == 3:
+                        rot = np.array([[ np.cos(an), np.sin(an), 0, 0],
+                                        [-np.sin(an), np.cos(an), 0, 0],
+                                        [          0,          0, 1, 0],
+                                        [          0,          0, 0, 1]])
+                        self.matrix = rot.dot(self.matrix)
 
     @property
     def rotation(self):
@@ -377,7 +380,7 @@ class RotationTransform(MatrixTransform):
 
 class ShearTransform(MatrixTransform):
 
-    def __init__(self, matrix=None, shear=0, axis=11):
+    def __init__(self, matrix=None, shear=None, axis=None):
         """Create shear transform.
 
         Parameters
@@ -396,8 +399,9 @@ class ShearTransform(MatrixTransform):
             self.matrix = matrix
         else:
             self.matrix = np.identity(4, dtype=np.double)
-            axis1, axis2 = _extract_shear_axis(axis)
-            self.matrix[axis2 - 1, axis1 - 1] = shear
+            if axis is not None:
+                axis1, axis2 = _extract_shear_axis(axis)
+                self.matrix[axis2 - 1, axis1 - 1] = shear
 
     def remove_shear(self):
         """Return new transform with shear removed.
@@ -434,7 +438,7 @@ class ShearTransform(MatrixTransform):
 
 class PerspectiveTransform(MatrixTransform):
 
-    def __init__(self, matrix=None, perspective=0, axis=1):
+    def __init__(self, matrix=None, perspective=None, axis=None):
         """Create perspective transform.
 
         Parameters
@@ -452,12 +456,13 @@ class PerspectiveTransform(MatrixTransform):
             self.matrix = matrix
         else:
             self.matrix = np.identity(4, dtype=np.double)
-            if not hasattr(axis, '__iter__'):
-                axis = (axis, )
-                perspective = (perspective, )
-            for ax, pe in zip(axis, perspective):
-                _check_axis(ax)
-                self.matrix[3, ax - 1] = pe
+            if axis is not None:
+                if not hasattr(axis, '__iter__'):
+                    axis = (axis, )
+                    perspective = (perspective, )
+                for ax, pe in zip(axis, perspective):
+                    _check_axis(ax)
+                    self.matrix[3, ax - 1] = pe
 
 
     def remove_perspective(self):
