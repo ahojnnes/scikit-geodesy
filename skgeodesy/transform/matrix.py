@@ -73,7 +73,7 @@ def _remove_scale_and_shear(tform):
 class MatrixTransform(object):
 
     def __init__(self, matrix=None):
-        """Create cartesic transform.
+        """Create matrix transform.
 
         Parameters
         ----------
