@@ -1,4 +1,4 @@
-from .matrix import MatrixTransform, TranslationTransform, ScaleTransform, \
+from .matrix import TranslationTransform, ScaleTransform, \
                     RotationTransform, ShearTransform, PerspectiveTransform, \
                     EuclideanTransform, SimilarityTransform, AffineTransform, \
                     ProjectiveTransform
