@@ -3,9 +3,6 @@ from numpy.testing import run_module_suite, assert_almost_equal
 from skgeodesy import transform
 
 
-AXIS_NAMES = ['x', 'y', 'z']
-
-
 class TestTranslationTransform(object):
 
     def test_init(self):
