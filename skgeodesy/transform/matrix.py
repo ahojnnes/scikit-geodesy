@@ -497,6 +497,8 @@ class PerspectiveTransform(MatrixTransform):
 
         """
 
+        if np.all(self.matrix[3] == (0, 0, 0, 1)):
+            return 0, 0, 0, 1
         removed = self.matrix.copy()
         removed[3] = (0, 0, 0, 1)
         return np.linalg.solve(removed.T, self.matrix[3])

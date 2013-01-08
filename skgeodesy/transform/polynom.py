@@ -32,9 +32,17 @@ def _solve_for_order(num_coeffs):
     return int(order)
 
 
+def _solve_for_coeffs(order):
+    """Solve equation for number of coefficients.
+
+    """
+
+    return ((order + 1) * (order + 2) * (order + 3)) / 2
+
+
 class PolynomialTransform(object):
 
-    def __init__(self, coeffs=None):
+    def __init__(self, order, coeffs=None):
         """Create polynomial transform.
 
         Parameters
@@ -48,9 +56,12 @@ class PolynomialTransform(object):
 
         if coeffs is None:
             # default to transformation which preserves original coordinates
-            coeffs = np.array([[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+            coeffs = np.zeros((3, _solve_for_coeffs(order) / 3))
+            coeffs[0, 1] = coeffs[1, 2] = coeffs[2, 3] = 1
         if coeffs.shape[0] != 3:
             raise ValueError('Invalid shape of polynomial coefficients')
+        assert coeffs.size == _solve_for_coeffs(order)
+        self.order = order
         self.coeffs = coeffs
 
     def __call__(self, coords):
