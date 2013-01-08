@@ -10,9 +10,6 @@ class TransformEstimator(object):
     def __init__(self, src, dst, src_weight=None, dst_weight=None):
         """Create total-least-squares transform estimator.
 
-        Double precision floating point numbers are used throughout the
-        estimation process.
-
         Parameters
         ----------
         src : (N, 3) array
@@ -63,6 +60,14 @@ class TransformEstimator(object):
         -------
         tform : object
             Estimated transform object.
+
+        Notes
+        -----
+         * the jacobian matrix is approximated by numerical central derivatives.
+         * double precision floating point numbers are used throughout the
+           estimation process.
+         * initial paramaeters are automatically estimated for computation
+           speedup and improved convergence
 
         """
 
@@ -552,9 +557,6 @@ class PolynomialTransformEstimator(TransformEstimator):
 
     def __init__(self, src, dst, order, src_weight=None, dst_weight=None):
         """Create total-least-squares transform estimator.
-
-        Double precision floating point numbers are used throughout the
-        estimation process.
 
         Parameters
         ----------
