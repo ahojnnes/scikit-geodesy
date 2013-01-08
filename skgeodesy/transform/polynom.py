@@ -138,7 +138,8 @@ class PolynomialTransform(object):
         if not isinstance(other, PolynomialTransform):
             raise TypeError('Cannot combine transformations '
                             'of differing types.')
-        return PolynomialTransform(coeffs=self.coeffs * other.coeffs)
+        return PolynomialTransform(order=self.order,
+                                   coeffs=self.coeffs * other.coeffs)
 
     def after(self, other):
         """New transform of this transform applied after another transform.
