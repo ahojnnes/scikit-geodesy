@@ -2,7 +2,7 @@ import numpy as np
 from numpy import sin, cos
 from .matrix import EuclideanTransform, SimilarityTransform, AffineTransform, \
                     ProjectiveTransform
-from .polynom import PolynomialTransform, _solve_for_coeffs
+from .polynom import PolynomialTransform, _solve_for_num_coeffs
 
 
 class TransformEstimator(object):
@@ -576,7 +576,7 @@ class PolynomialTransformEstimator(TransformEstimator):
         TransformEstimator.__init__(self, src, dst, src_weight=src_weight,
                                     dst_weight=dst_weight)
         self.order = order
-        self._pnum = _solve_for_coeffs(order)
+        self._pnum = _solve_for_num_coeffs(order)
 
     def _estimate_initial_params(self):
         tform = PolynomialTransform(self.order)
