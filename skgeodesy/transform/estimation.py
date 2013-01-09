@@ -43,11 +43,14 @@ class TransformEstimator(object):
         self.obs = np.hstack([dst[:, 0], dst[:, 1], dst[:, 2],
                               src[:, 0], src[:, 1], src[:, 2]]).T
 
-    def estimate(self, eps=1e-6, max_iter=10, verbose=True):
+    def estimate(self, x0=None, eps=1e-6, max_iter=10, verbose=True):
         """Estimate
 
         Parameters
         ----------
+        x0 : (U, ) array, optional
+            Initial estimation parameters. If `None`By default they are
+            automatically guessed.
         eps : float, optional
             Convergence criteria for iteration. Stops if
             `sqrt(sum(dx**2)) < eps)`.
@@ -63,10 +66,10 @@ class TransformEstimator(object):
 
         Notes
         -----
-         * the jacobian matrix is approximated by numerical central derivatives.
+         * the jacobian matrix is approximated by numerical central derivatives
          * double precision floating point numbers are used throughout the
-           estimation process.
-         * initial paramaeters are automatically estimated for computation
+           estimation process
+         * initial parameters are automatically estimated for computation
            speedup and improved convergence
 
         """
@@ -77,7 +80,7 @@ class TransformEstimator(object):
         # weight matrix
         W = self._build_weight_matrix()
         # approximation / initial unknown variables
-        x = self._build_initial_x()
+        x = self._build_initial_x(x0)
         # error vector
         dx = np.empty_like(x)
         dx[:] = np.inf
@@ -99,7 +102,7 @@ class TransformEstimator(object):
 
         return self._build_transform(self._split_x(x)[0])
 
-    def _build_initial_x(self):
+    def _build_initial_x(self, x0=None):
         """Build initial unknowns.
 
         Returns
@@ -109,7 +112,8 @@ class TransformEstimator(object):
 
         """
 
-        x0 = self._estimate_initial_params()
+        if x0 is None:
+            x0 = self._estimate_initial_params()
         return np.hstack([x0, self.src[:, 0], self.src[:, 1], self.src[:, 2]])
 
     def _build_error_vector(self, x):
