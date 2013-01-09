@@ -182,6 +182,11 @@ class TransformEstimator(object):
         x : (U, ) array
             Vector of unknowns.
 
+        Returns
+        -------
+        A : (6 * N, U) array
+            Jacobian matrix.
+
         References
         ----------
         ..[1] Numerical Recipes in C - The Art of Scientific Computing - 2nd
@@ -194,19 +199,19 @@ class TransformEstimator(object):
 
         eps = np.spacing(1)
 
-        # jacobian matrix
+        # jacobian matrix - x, y, z for source and destination coordinates
         A = np.zeros((6 * self._cnum, x.size), dtype=np.double)
 
         for p in range(x.size):
-            step_size = max(1e6 * eps, np.abs(x[p] * np.sqrt(eps)))
+            step_size = max(np.sqrt(eps), abs(x[p]) * np.sqrt(eps))
 
-            # backward
+            # backward function evaluation
             x0_bwd = x.copy()
             x0_bwd[p] -= step_size
             tform_bwd = self._build_transform(self._split_x(x0_bwd)[0])
             dst_bwd = tform_bwd(xyz)
 
-            # forward
+            # forward function evaluation
             x0_fwd = x.copy()
             x0_fwd[p] += step_size
             tform_fwd = self._build_transform(self._split_x(x0_fwd)[0])
@@ -215,6 +220,7 @@ class TransformEstimator(object):
             # central derivative
             dst_diff = (dst_fwd - dst_bwd) / (x0_fwd[p] - x0_bwd[p])
 
+            # fill jacobian matrix column
             A[0:self._cnum, p] = dst_diff[:, 0]
             A[self._cnum:2 * self._cnum, p] = dst_diff[:, 1]
             A[2 * self._cnum:3 * self._cnum, p] = dst_diff[:, 2]
