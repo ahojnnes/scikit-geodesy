@@ -104,6 +104,7 @@ class PolynomialTransform(object):
                     dst[:, 2] += self.coeffs[2, pidx] * a
                     pidx += 1
 
+        # return as input
         if input_is_2D:
             out = dst[:, :2]
         else:

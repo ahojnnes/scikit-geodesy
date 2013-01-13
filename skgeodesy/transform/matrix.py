@@ -121,12 +121,14 @@ class MatrixTransform(object):
         dst[:, 1] /= dst[:, 3]
         dst[:, 2] /= dst[:, 3]
 
+        # return as input
         if input_is_2D:
             out = dst[:, :2]
         else:
             out = dst[:, :3]
         if input_ndim == 1:
             out = np.squeeze(out)
+
         return out
 
     def inverse(self):
