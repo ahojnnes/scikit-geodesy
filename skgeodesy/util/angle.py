@@ -78,17 +78,37 @@ def deg2dms(x, out=None):
     x = np.asarray(x)
 
     if out is None:
-        out = np.empty(x.shape + (3, ), dtype=np.double)
+        out = np.atleast_2d(np.empty(x.shape + (3, ), dtype=np.double))
 
+    # conversion
     xabs = np.abs(x)
     out[..., 0] = np.floor(xabs)
     xabs = (xabs - out[..., 0]) * 60
     out[..., 1] = np.floor(xabs)
     out[..., 2] = (xabs - out[..., 1]) * 60
 
+    # corrections caused by limited machine precision
+    eps = np.spacing(1)
+
+    s = out[..., 2]
+    smask = ((np.round(s) - s) / 3600) < eps
+    out[..., 2][smask] = np.round(out[..., 2][smask])
+
+    mmask = s == -60
+    out[..., 1][mmask] = out[..., 1][mmask] - 1
+    mmask = s == 60
+    out[..., 1][mmask] = out[..., 1][mmask] + 1
+
+    out[..., 2][s == -60] = 0
+    out[..., 2][s == 60] = 0
+
+    # apply correct sign
     sign = np.sign(x)
     for i in range(3):
         out[..., i] *= sign
+
+    if x.ndim == 0:
+        return out[0]
 
     return out
 
