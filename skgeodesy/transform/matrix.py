@@ -102,6 +102,10 @@ class MatrixTransform(object):
 
         """
 
+        # empty input
+        if coords.size == 0:
+            return coords.copy()
+
         coords = np.array(coords, copy=False)
         input_ndim = coords.ndim
         coords = np.atleast_2d(coords)

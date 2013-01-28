@@ -36,6 +36,10 @@ class PiecewiseAffineTransform(object):
 
         """
 
+        # empty input
+        if coords.size == 0:
+            return coords.copy()
+
         coords = np.array(coords, copy=False)
         input_ndim = coords.ndim
         coords = np.atleast_2d(coords)
@@ -47,11 +51,17 @@ class PiecewiseAffineTransform(object):
         else:
             x, y, z = np.transpose(coords)
 
-        src = np.vstack((x, y, z))
+        src = np.vstack((x, y, z)).T
         dst = np.empty_like(src)
 
         # find simplex for each coordinate
-        simplex = self.tesselation.find_simplex(src)
+        if self.tesselation.ndim == 3:
+            tesselation_coords = src
+        elif self.tesselation.ndim == 2:
+            tesselation_coords = src[:, 0:2]
+        elif self.tesselation.ndim == 1:
+            tesselation_coords = src[:, 0]
+        simplex = self.tesselation.find_simplex(tesselation_coords)
 
         # coordinates outside of mesh
         dst[simplex == -1, :] = np.nan
@@ -62,7 +72,8 @@ class PiecewiseAffineTransform(object):
             # all coordinates within triangle
             index_mask = simplex == index
 
-            dst[index_mask, :] = affine(src[index_mask, :])
+            if np.any(index_mask):
+                dst[index_mask, :] = affine(src[index_mask, :])
 
         # return as input
         if input_is_2D:

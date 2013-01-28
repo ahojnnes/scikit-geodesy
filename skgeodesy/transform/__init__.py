@@ -8,4 +8,5 @@ from .estimation import EuclideanTransformEstimator, \
                         SimilarityTransformEstimator, \
                         AffineTransformEstimator, \
                         ProjectiveTransformEstimator, \
-                        PolynomialTransformEstimator
+                        PolynomialTransformEstimator, \
+                        PiecewiseAffineTransformEstimator

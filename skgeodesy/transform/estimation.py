@@ -605,14 +605,15 @@ class PiecewiseAffineTransformEstimator(TransformEstimator):
 
     """
 
-    def estimate(self, eps=1e-6, max_iter=10, verbose=True):
+    def estimate(self, ndim=3, eps=1e-6, max_iter=10, verbose=False):
         """Estimate
 
         Parameters
         ----------
-        x0 : (U, ) array, optional
-            Initial estimation parameters. If `None`By default they are
-            automatically guessed.
+        ndim : {1, 2, 3}, optional
+            Number of dimensions. By default 3D coordinates are assumed.
+            If the 3rd coordinate component is 0, then `ndim = 2` should be
+            used.
         eps : float, optional
             Convergence criteria for iteration. Stops if
             `sqrt(sum(dx**2)) < eps)`.
@@ -630,7 +631,13 @@ class PiecewiseAffineTransformEstimator(TransformEstimator):
 
         # forward piecewise affine
         # triangulate input positions into mesh
-        tesselation = scipy.spatial.Delaunay(src)
+        if ndim == 3:
+            tesselation_coords = self.src
+        elif ndim == 2:
+            tesselation_coords = self.src[:, 0:2]
+        elif ndim == 1:
+            tesselation_coords = self.src[:, 0]
+        tesselation = scipy.spatial.Delaunay(tesselation_coords)
         # find affine mapping from source positions to destination
         affines = []
         for tri in tesselation.vertices:
@@ -641,4 +648,3 @@ class PiecewiseAffineTransformEstimator(TransformEstimator):
             affines.append(affine)
 
         return PiecewiseAffineTransform(tesselation, affines)
-
