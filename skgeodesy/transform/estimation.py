@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import sin, cos
 from .matrix import EuclideanTransform, SimilarityTransform, AffineTransform, \
                     ProjectiveTransform
 from .polynom import PolynomialTransform, _solve_for_num_coeffs
@@ -43,7 +42,7 @@ class TransformEstimator(object):
         self.obs = np.hstack([dst[:, 0], dst[:, 1], dst[:, 2],
                               src[:, 0], src[:, 1], src[:, 2]]).T
 
-    def estimate(self, x0=None, eps=1e-6, max_iter=10, verbose=True):
+    def estimate(self, x0=None, eps=1e-6, max_iter=20, verbose=True):
         """Estimate
 
         Parameters
@@ -92,7 +91,7 @@ class TransformEstimator(object):
             # normal equation matrix
             N = np.dot(A.T, np.dot(W, A))
             # error in taylor approximation
-            dx = np.dot(np.linalg.pinv(N), np.dot(A.T, np.dot(W, w)))
+            dx = np.dot(np.linalg.inv(N), np.dot(A.T, np.dot(W, w)))
             # "improve" parameters by approximation error
             x += dx
 
@@ -376,8 +375,7 @@ class EuclideanTransformEstimator(MatrixTransformEstimator):
         tform = self.estimate_without_weight()
         tx, ty, tz = tform.translation
         rx, ry, rz = tform.rotation
-        s = np.mean(tform.scale)
-        return s * tx, s * ty, s * tz, rx, ry, rz
+        return tx, ty, tz, rx, ry, rz
 
     def _build_transform(self, params):
         tx, ty, tz, rx, ry, rz = params
