@@ -1,8 +1,9 @@
 import numpy as np
+import scipy.spatial
 from .matrix import EuclideanTransform, SimilarityTransform, AffineTransform, \
                     ProjectiveTransform
 from .polynom import PolynomialTransform, _solve_for_num_coeffs
-
+from .piecewise import PiecewiseAffineTransform
 
 class TransformEstimator(object):
 
@@ -593,3 +594,51 @@ class PolynomialTransformEstimator(TransformEstimator):
     def _build_transform(self, params):
         coeffs = params.reshape(3, self._pnum / 3)
         return PolynomialTransform(self.order, coeffs=coeffs)
+
+
+class PiecewiseAffineTransformEstimator(TransformEstimator):
+
+    """Piecewise affine transform estimator.
+
+    A Delaunay triangulation is performed first, then  the well-defined, local
+    affine transform is estimated for each resulting simplex.
+
+    """
+
+    def estimate(self, eps=1e-6, max_iter=10, verbose=True):
+        """Estimate
+
+        Parameters
+        ----------
+        x0 : (U, ) array, optional
+            Initial estimation parameters. If `None`By default they are
+            automatically guessed.
+        eps : float, optional
+            Convergence criteria for iteration. Stops if
+            `sqrt(sum(dx**2)) < eps)`.
+        max_iter : int, optional
+            Maximum number of iterations.
+        verbose : bool, optional
+            Show status for each iteration.
+
+        Returns
+        -------
+        tform : object
+            Estimated transform object.
+
+        """
+
+        # forward piecewise affine
+        # triangulate input positions into mesh
+        tesselation = scipy.spatial.Delaunay(src)
+        # find affine mapping from source positions to destination
+        affines = []
+        for tri in tesselation.vertices:
+            estimator = AffineTransformEstimator(self.src[tri, :],
+                                                 self.dst[tri, :])
+            affine = estimator.estimate(eps=eps, max_iter=max_iter,
+                                        verbose=verbose)
+            affines.append(affine)
+
+        return PiecewiseAffineTransform(tesselation, affines)
+
